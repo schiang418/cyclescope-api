@@ -1,0 +1,331 @@
+import { initTRPC } from '@trpc/server';
+import { z } from 'zod';
+import { runGammaAnalysis } from './assistants/gamma.js';
+import { runDeltaAnalysis } from './assistants/delta.js';
+import { runFusionAnalysis } from './assistants/fusion.js';
+import {
+  saveDailySnapshot,
+  getLatestSnapshot,
+  getSnapshotHistory,
+  getRecentChanges,
+  trackStatusChange,
+} from './db.js';
+
+const t = initTRPC.create();
+
+export const appRouter = t.router({
+  /**
+   * Health check endpoint
+   */
+  health: t.procedure.query(() => {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'CycleScope API',
+    };
+  }),
+
+  /**
+   * Trigger full analysis (Gamma + Delta + Fusion)
+   */
+  analysis: t.router({
+    triggerAll: t.procedure
+      .input(z.object({
+        date: z.string().optional(), // YYYY-MM-DD format
+      }).optional())
+      .mutation(async ({ input }) => {
+        const analysisDate = input?.date;
+        console.log(`[API] Starting full analysis pipeline for ${analysisDate || 'today (ET)'}...`);
+      
+      try {
+        // Step 1: Run Gamma analysis (18 charts)
+        console.log('[API] Step 1/3: Running Gamma analysis...');
+        const gammaResult = await runGammaAnalysis('engine', analysisDate);
+        
+        // Step 2: Run Delta analysis (14 charts)
+        console.log('[API] Step 2/3: Running Delta analysis...');
+        const deltaResult = await runDeltaAnalysis('engine', analysisDate);
+        
+        // Step 3: Run Fusion synthesis
+        console.log('[API] Step 3/3: Running Fusion synthesis...');
+        const fusionResult = await runFusionAnalysis(gammaResult, deltaResult, analysisDate);
+        
+        // Step 4: Save to database
+        console.log('[API] Saving results to database...');
+        const snapshot = await saveDailySnapshot({
+          date: analysisDate ? new Date(analysisDate) : new Date(),
+          
+          // Fusion - ALL fields
+          fusionAsofDate: fusionResult.asofDate,
+          fusionCycleStage: fusionResult.cycleStage,
+          fusionFragilityColor: fusionResult.fragilityColor,
+          fusionFragilityLabel: fusionResult.fragilityLabel,
+          fusionGuidanceLabel: fusionResult.guidanceLabel,
+          fusionHeadlineSummary: fusionResult.headlineSummary,
+          fusionCycleTone: fusionResult.cycleTone,
+          fusionNarrativeSummary: fusionResult.narrativeSummary,
+          fusionGuidanceBullets: fusionResult.guidanceBullets,
+          fusionWatchCommentary: fusionResult.watchCommentary,
+          
+          // Gamma - ALL fields
+          gammaAsofWeek: gammaResult.asofWeek,
+          gammaCycleStagePrimary: gammaResult.cycleStagePrimary,
+          gammaCycleStageTransition: gammaResult.cycleStageTransition,
+          gammaMacroPostureLabel: gammaResult.macroPostureLabel,
+          gammaHeadlineSummary: gammaResult.headlineSummary,
+          gammaDomains: gammaResult.domains,
+          gammaPhaseConfidence: gammaResult.phaseConfidence,
+          gammaCycleTone: gammaResult.cycleTone,
+          gammaOverallSummary: gammaResult.overallSummary,
+          gammaDomainDetails: gammaResult.domainDetails,
+          
+          // Delta - ALL fields
+          deltaAsofDate: deltaResult.asofDate,
+          deltaFragilityColor: deltaResult.fragilityColor,
+          deltaFragilityLabel: deltaResult.fragilityLabel,
+          deltaFragilityScore: deltaResult.fragilityScore,
+          deltaTemplateCode: deltaResult.templateCode,
+          deltaTemplateName: deltaResult.templateName,
+          deltaPatternPlain: deltaResult.patternPlain,
+          deltaPostureCode: deltaResult.postureCode,
+          deltaPostureLabel: deltaResult.postureLabel,
+          deltaHeadlineSummary: deltaResult.headlineSummary,
+          deltaKeyDrivers: deltaResult.keyDrivers,
+          deltaNextWatchDisplay: deltaResult.nextWatchDisplay,
+          deltaPhaseUsed: deltaResult.phaseUsed,
+          deltaPhaseConfidence: deltaResult.phaseConfidence,
+          deltaBreadth: deltaResult.breadth,
+          deltaLiquidity: deltaResult.liquidity,
+          deltaVolatility: deltaResult.volatility,
+          deltaLeadership: deltaResult.leadership,
+          deltaBreadthText: deltaResult.breadthText,
+          deltaLiquidityText: deltaResult.liquidityText,
+          deltaVolatilityText: deltaResult.volatilityText,
+          deltaLeadershipText: deltaResult.leadershipText,
+          deltaRationaleBullets: deltaResult.rationaleBullets,
+          deltaPlainEnglishSummary: deltaResult.plainEnglishSummary,
+          deltaNextTriggersDetail: deltaResult.nextTriggersDetail,
+          
+          // Full analysis JSON (backup)
+          fullAnalysis: {
+            gamma: gammaResult.fullAnalysis,
+            delta: deltaResult.fullAnalysis,
+            fusion: fusionResult.fullAnalysis,
+          },
+        });
+        
+        // Step 5: Track status changes
+        const previous = await getLatestSnapshot();
+        if (previous && previous.id !== snapshot.id) {
+          // Check for changes in key fields
+          const fieldsToTrack = [
+            { name: 'fusion_cycle_stage', old: previous.fusionCycleStage, new: snapshot.fusionCycleStage },
+            { name: 'fusion_fragility_label', old: previous.fusionFragilityLabel, new: snapshot.fusionFragilityLabel },
+            { name: 'delta_fragility_score', old: previous.deltaFragilityScore?.toString(), new: snapshot.deltaFragilityScore?.toString() },
+          ];
+          
+          for (const field of fieldsToTrack) {
+            if (field.old !== field.new) {
+              await trackStatusChange({
+                fieldName: field.name,
+                oldValue: field.old || null,
+                newValue: field.new || '',
+              });
+            }
+          }
+        }
+        
+        console.log('[API] Analysis pipeline complete!');
+        
+        return {
+          success: true,
+          snapshotId: snapshot.id,
+          timestamp: snapshot.createdAt,
+          results: {
+            fusion: fusionResult,
+            gamma: gammaResult,
+            delta: deltaResult,
+          },
+        };
+      } catch (error) {
+        console.error('[API] Analysis failed:', error);
+        throw new Error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
+
+    /**
+     * Get latest snapshot
+     */
+    latest: t.procedure.query(async () => {
+      const snapshot = await getLatestSnapshot();
+      
+      if (!snapshot) {
+        return null;
+      }
+      
+      // Format date as YYYY-MM-DD
+      const dateStr = snapshot.date instanceof Date 
+        ? snapshot.date.toISOString().split('T')[0]
+        : snapshot.date;
+      
+      return {
+        id: snapshot.id,
+        date: dateStr,
+        
+        // Fusion - ALL fields
+        fusion: {
+          asofDate: snapshot.fusionAsofDate,
+          cycleStage: snapshot.fusionCycleStage,
+          fragilityColor: snapshot.fusionFragilityColor,
+          fragilityLabel: snapshot.fusionFragilityLabel,
+          guidanceLabel: snapshot.fusionGuidanceLabel,
+          headlineSummary: snapshot.fusionHeadlineSummary,
+          cycleTone: snapshot.fusionCycleTone,
+          narrativeSummary: snapshot.fusionNarrativeSummary,
+          guidanceBullets: snapshot.fusionGuidanceBullets,
+          watchCommentary: snapshot.fusionWatchCommentary,
+        },
+        
+        // Gamma - ALL fields
+        gamma: {
+          asofWeek: snapshot.gammaAsofWeek,
+          cycleStagePrimary: snapshot.gammaCycleStagePrimary,
+          cycleStageTransition: snapshot.gammaCycleStageTransition,
+          macroPostureLabel: snapshot.gammaMacroPostureLabel,
+          headlineSummary: snapshot.gammaHeadlineSummary,
+          domains: snapshot.gammaDomains,
+          phaseConfidence: snapshot.gammaPhaseConfidence,
+          cycleTone: snapshot.gammaCycleTone,
+          overallSummary: snapshot.gammaOverallSummary,
+          domainDetails: snapshot.gammaDomainDetails,
+        },
+        
+        // Delta - ALL fields
+        delta: {
+          asofDate: snapshot.deltaAsofDate,
+          fragilityColor: snapshot.deltaFragilityColor,
+          fragilityLabel: snapshot.deltaFragilityLabel,
+          fragilityScore: snapshot.deltaFragilityScore,
+          templateCode: snapshot.deltaTemplateCode,
+          templateName: snapshot.deltaTemplateName,
+          patternPlain: snapshot.deltaPatternPlain,
+          postureCode: snapshot.deltaPostureCode,
+          postureLabel: snapshot.deltaPostureLabel,
+          headlineSummary: snapshot.deltaHeadlineSummary,
+          keyDrivers: snapshot.deltaKeyDrivers,
+          nextWatchDisplay: snapshot.deltaNextWatchDisplay,
+          phaseUsed: snapshot.deltaPhaseUsed,
+          phaseConfidence: snapshot.deltaPhaseConfidence,
+          breadth: snapshot.deltaBreadth,
+          liquidity: snapshot.deltaLiquidity,
+          volatility: snapshot.deltaVolatility,
+          leadership: snapshot.deltaLeadership,
+          breadthText: snapshot.deltaBreadthText,
+          liquidityText: snapshot.deltaLiquidityText,
+          volatilityText: snapshot.deltaVolatilityText,
+          leadershipText: snapshot.deltaLeadershipText,
+          rationaleBullets: snapshot.deltaRationaleBullets,
+          plainEnglishSummary: snapshot.deltaPlainEnglishSummary,
+          nextTriggersDetail: snapshot.deltaNextTriggersDetail,
+        },
+        
+        fullAnalysis: snapshot.fullAnalysis,
+        createdAt: snapshot.createdAt,
+      };
+    }),
+
+    /**
+     * Get snapshot history with ALL 44+ fields
+     * Returns exactly N entries (one per day), with null for missing dates
+     */
+    history: t.procedure
+      .input(z.object({ days: z.number().min(1).max(365).default(30) }))
+      .query(async ({ input }) => {
+        const snapshots = await getSnapshotHistory(input.days);
+        
+        return snapshots.map(snapshot => {
+          const dateStr = snapshot.date instanceof Date 
+            ? snapshot.date.toISOString().split('T')[0]
+            : snapshot.date;
+          
+          return {
+            id: snapshot.id,
+            date: dateStr,
+            
+            // Fusion - ALL fields (10)
+            fusion: {
+              asofDate: snapshot.fusionAsofDate,
+              cycleStage: snapshot.fusionCycleStage,
+              fragilityColor: snapshot.fusionFragilityColor,
+              fragilityLabel: snapshot.fusionFragilityLabel,
+              guidanceLabel: snapshot.fusionGuidanceLabel,
+              headlineSummary: snapshot.fusionHeadlineSummary,
+              cycleTone: snapshot.fusionCycleTone,
+              narrativeSummary: snapshot.fusionNarrativeSummary,
+              guidanceBullets: snapshot.fusionGuidanceBullets,
+              watchCommentary: snapshot.fusionWatchCommentary,
+            },
+            
+            // Gamma - ALL fields (10 + 2 arrays)
+            gamma: {
+              asofWeek: snapshot.gammaAsofWeek,
+              cycleStagePrimary: snapshot.gammaCycleStagePrimary,
+              cycleStageTransition: snapshot.gammaCycleStageTransition,
+              macroPostureLabel: snapshot.gammaMacroPostureLabel,
+              headlineSummary: snapshot.gammaHeadlineSummary,
+              domains: snapshot.gammaDomains,
+              phaseConfidence: snapshot.gammaPhaseConfidence,
+              cycleTone: snapshot.gammaCycleTone,
+              overallSummary: snapshot.gammaOverallSummary,
+              domainDetails: snapshot.gammaDomainDetails,
+            },
+            
+            // Delta - ALL fields (24)
+            delta: {
+              asofDate: snapshot.deltaAsofDate,
+              fragilityColor: snapshot.deltaFragilityColor,
+              fragilityLabel: snapshot.deltaFragilityLabel,
+              fragilityScore: snapshot.deltaFragilityScore,
+              templateCode: snapshot.deltaTemplateCode,
+              templateName: snapshot.deltaTemplateName,
+              patternPlain: snapshot.deltaPatternPlain,
+              postureCode: snapshot.deltaPostureCode,
+              postureLabel: snapshot.deltaPostureLabel,
+              headlineSummary: snapshot.deltaHeadlineSummary,
+              keyDrivers: snapshot.deltaKeyDrivers,
+              nextWatchDisplay: snapshot.deltaNextWatchDisplay,
+              phaseUsed: snapshot.deltaPhaseUsed,
+              phaseConfidence: snapshot.deltaPhaseConfidence,
+              breadth: snapshot.deltaBreadth,
+              liquidity: snapshot.deltaLiquidity,
+              volatility: snapshot.deltaVolatility,
+              leadership: snapshot.deltaLeadership,
+              breadthText: snapshot.deltaBreadthText,
+              liquidityText: snapshot.deltaLiquidityText,
+              volatilityText: snapshot.deltaVolatilityText,
+              leadershipText: snapshot.deltaLeadershipText,
+              rationaleBullets: snapshot.deltaRationaleBullets,
+              plainEnglishSummary: snapshot.deltaPlainEnglishSummary,
+              nextTriggersDetail: snapshot.deltaNextTriggersDetail,
+            },
+            
+            fullAnalysis: snapshot.fullAnalysis,
+            createdAt: snapshot.createdAt,
+          };
+        });
+      }),
+
+    /**
+     * Get recent status changes
+     */
+    changes: t.procedure
+      .input(z.object({ limit: z.number().min(1).max(100).default(10) }))
+      .query(async ({ input }) => {
+        const changes = await getRecentChanges(input.limit);
+        return changes;
+      }),
+  }),
+});
+
+export type AppRouter = typeof appRouter;
+
