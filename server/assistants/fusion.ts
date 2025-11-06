@@ -50,6 +50,7 @@ function getMarketDate(): string {
  * Run Fusion Assistant to synthesize Gamma and Delta analyses
  */
 export async function runFusionAnalysis(
+  mode: 'engine' | 'panel' = 'engine',
   gammaResult: GammaAnalysisResult,
   deltaResult: DeltaAnalysisResult,
   date?: string
@@ -63,7 +64,8 @@ export async function runFusionAnalysis(
   const thread = await client.beta.threads.create();
   
   // Pass the full JSON objects from Gamma and Delta
-  const synthesisPrompt = `
+  const synthesisPrompt = `${mode}
+
 IMPORTANT: Use this exact date in your output:
 Analysis Date: ${analysisDate}
 

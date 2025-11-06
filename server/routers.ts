@@ -48,7 +48,7 @@ export const appRouter = t.router({
         
         // Step 3: Run Fusion synthesis
         console.log('[API] Step 3/3: Running Fusion synthesis...');
-        const fusionResult = await runFusionAnalysis(gammaResult, deltaResult, analysisDate);
+        const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
         
         // Step 4: Save to database
         console.log('[API] Saving results to database...');
