@@ -116,8 +116,26 @@ Please provide:
   
   const fullAnalysis = assistantMessage.content[0].text.value;
   
-  // Parse JSON output (mode='engine' always returns JSON)
-  const fusionData = JSON.parse(fullAnalysis);
+  // Log the raw response for debugging
+  console.log('[Fusion] Raw response (first 200 chars):', fullAnalysis.substring(0, 200));
+  
+  // Try to extract JSON from markdown code blocks if present
+  let jsonString = fullAnalysis;
+  const jsonMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonString = jsonMatch[1].trim();
+    console.log('[Fusion] Extracted JSON from markdown code block');
+  }
+  
+  // Parse JSON output (mode='engine' should return JSON)
+  let fusionData;
+  try {
+    fusionData = JSON.parse(jsonString);
+  } catch (parseError) {
+    console.error('[Fusion] JSON parse failed!');
+    console.error('[Fusion] Full response:', fullAnalysis);
+    throw new Error(`Failed to parse Fusion response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+  }
   console.log('[Fusion] Successfully parsed JSON output');
   
   // Extract ALL fields from JSON
