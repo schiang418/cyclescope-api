@@ -20,7 +20,7 @@ function getMarketDate(): string {
 /**
  * Save daily snapshot to database
  */
-export async function saveDailySnapshot(data: InsertDailySnapshot & { analysisDate?: string }) {
+export async function saveDailySnapshot(data: Omit<InsertDailySnapshot, 'date'> & { analysisDate?: string }) {
   const { analysisDate, ...snapshotData } = data;
   
   // Use provided date or current market date (ET)
@@ -81,7 +81,7 @@ export async function getSnapshotHistory(days: number = 30) {
   const dataMap = new Map(
     snapshots.map(s => {
       // date field is already a string (YYYY-MM-DD) from database
-      const dateStr = typeof s.date === 'string' ? s.date : s.date.toISOString().split('T')[0];
+      const dateStr = typeof s.date === 'string' ? s.date : (s.date as any).toISOString().split('T')[0];
       // createdAt is a timestamp, convert to ISO string
       const createdAtStr = s.createdAt instanceof Date ? s.createdAt.toISOString() : String(s.createdAt);
       

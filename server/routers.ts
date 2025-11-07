@@ -53,7 +53,7 @@ export const appRouter = t.router({
         // Step 4: Save to database
         console.log('[API] Saving results to database...');
         const snapshot = await saveDailySnapshot({
-          date: analysisDate ? new Date(analysisDate) : new Date(),
+          analysisDate, // Pass as string, saveDailySnapshot will handle conversion
           
           // Fusion - ALL fields
           fusionAsofDate: fusionResult.asofDate,
@@ -163,10 +163,10 @@ export const appRouter = t.router({
         return null;
       }
       
-      // Format date as YYYY-MM-DD
-      const dateStr = snapshot.date instanceof Date 
-        ? snapshot.date.toISOString().split('T')[0]
-        : snapshot.date;
+      // Format date as YYYY-MM-DD (date is already a string from database)
+      const dateStr = typeof snapshot.date === 'string' 
+        ? snapshot.date
+        : (snapshot.date as any).toISOString().split('T')[0];
       
       return {
         id: snapshot.id,
