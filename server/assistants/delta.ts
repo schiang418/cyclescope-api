@@ -118,7 +118,7 @@ export async function runDeltaAnalysis(
   const messageContent: Array<{type: string; text?: string; image_url?: {url: string}}> = [
     {
       type: "text",
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nThe charts are attached below as images. Please read the actual indicator values from each chart.`
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nThe charts are attached below as images.`
     },
     // Add all chart images
     ...chartUrls.map(url => ({

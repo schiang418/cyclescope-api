@@ -103,7 +103,7 @@ export async function runGammaAnalysis(
   const messageContent: any[] = [
     {
       type: 'text',
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().`
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nCRITICAL: For each domain in level2 domain_details, you MUST:\n1. READ the actual numeric indicator values from the chart images\n2. Include SPECIFIC VALUES in the "observations" field (e.g., "XLY/XLP = 1.5, IWF/IWD = 1.1")\n3. DO NOT use generic descriptions - quote the actual numbers you see\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().`
     }
   ];
   
@@ -114,6 +114,10 @@ export async function runGammaAnalysis(
       image_url: { url: chartUrl }
     });
   }
+  
+  console.log('[Gamma] Sending message with', messageContent.length, 'items (1 text +', chartUrls.length, 'images)');
+  console.log('[Gamma] First image URL:', chartUrls[0]);
+  console.log('[Gamma] Message content types:', messageContent.map(m => m.type).join(', '));
   
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',

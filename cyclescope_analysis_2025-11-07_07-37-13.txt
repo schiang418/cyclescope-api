@@ -1,0 +1,172 @@
+Fetching latest analysis from API...
+API: https://cyclescope-api-production.up.railway.app/api/trpc/analysis.latest
+
+==========================================================================================
+  CYCLESCOPE LATEST ANALYSIS
+  Format: database_column_name (apiFieldName): value
+==========================================================================================
+
+date: 2025-11-07
+created_at (createdAt): 2025-11-07T10:33:48.537Z
+updated_at (updatedAt): 2025-11-07T12:37:04.128Z
+
+==========================================================================================
+  FUSION ANALYSIS (Market Synthesis)
+==========================================================================================
+
+fusion_asof_date (asofDate): 2025-11-07
+fusion_cycle_stage (cycleStage): Late Expansion
+fusion_fragility_color (fragilityColor): YELLOW
+fusion_fragility_label (fragilityLabel): Caution Warranted
+fusion_guidance_label (guidanceLabel): Caution
+fusion_headline_summary (headlineSummary): Market shows mixed signals with cautious optimism amidst liquidity stress.
+fusion_cycle_tone (cycleTone): Cautious optimism
+fusion_narrative_summary (narrativeSummary):
+  The market is currently in a late expansion phase characterized by mixed leadership and breadth indicators. While sentiment remains cautious, volatility and credit conditions are stable. Macro trends indicate a deceleration in growth, warranting close monitoring for potential shifts. Overall, the market is navigating a complex landscape with emerging risks. Caution is warranted as liquidity conditions tighten and leadership narrows, indicating potential vulnerabilities.
+fusion_guidance_bullets (guidanceBullets): [4 items]
+  1. Consider reducing exposure to sectors showing weakness.
+  2. Maintain a defensive posture in portfolio allocations.
+  3. Monitor liquidity conditions closely for signs of stress.
+  4. Watch for changes in leadership dynamics that may signal shifts.
+fusion_watch_commentary (watchCommentary): Focus on liquidity trends and leadership shifts for potential market transitions.
+
+==========================================================================================
+  GAMMA ANALYSIS (Weekly Macro Cycle)
+==========================================================================================
+
+gamma_asof_week (asofWeek): 2025-11-07
+gamma_cycle_stage_primary (cycleStagePrimary): Late Expansion
+gamma_cycle_stage_transition (cycleStageTransition): Monitoring for signs of a slowdown
+gamma_macro_posture_label (macroPostureLabel): Cautious
+gamma_headline_summary (headlineSummary): Market shows mixed signals with cautious optimism.
+
+gamma_domains (domains): [6 domains]
+
+  📊 domain_name: Leadership
+     bias_label: Mixed
+     strength_label: Medium
+     status_summary: Leadership is showing signs of sector rotation with tech leading.
+     color_code: 🟡
+
+  📊 domain_name: Breadth
+     bias_label: Elevated Risk
+     strength_label: Soft
+     status_summary: Breadth indicators suggest weakening participation.
+     color_code: 🟠
+
+  📊 domain_name: Sentiment
+     bias_label: Neutral
+     strength_label: Medium
+     status_summary: Sentiment remains cautious with mixed indicators.
+     color_code: ⚪️
+
+  📊 domain_name: Volatility
+     bias_label: Bullish
+     strength_label: Strong
+     status_summary: Volatility indicators suggest stability in the market.
+     color_code: 🟢
+
+  📊 domain_name: Credit / Liquidity
+     bias_label: Bullish
+     strength_label: Medium
+     status_summary: Credit conditions remain stable with no signs of stress.
+     color_code: 🟢
+
+  📊 domain_name: Macro Trend
+     bias_label: Mixed
+     strength_label: Medium
+     status_summary: Macro indicators show signs of deceleration but not contraction.
+     color_code: 🟡
+
+gamma_phase_confidence (phaseConfidence): 75%
+gamma_cycle_tone (cycleTone): Cautious optimism
+gamma_overall_summary (overallSummary):
+  The market is currently in a late expansion phase, characterized by mixed leadership and breadth indicators. While sentiment remains cautious, volatility and credit conditions are stable. Macro trends indicate a deceleration in growth, warranting close monitoring for potential shifts. Overall, the market is navigating a complex landscape with emerging risks.
+
+gamma_domain_details (domain_details): [6 domains]
+
+  📊 domain_name: Leadership
+     summary: Leadership is showing signs of sector rotation with tech leading.
+     observations: Tech stocks are outperforming while cyclicals show weakness.
+     interpretation: The market is favoring growth sectors, indicating a potential late-cycle behavior....
+
+  📊 domain_name: Breadth
+     summary: Breadth indicators suggest weakening participation.
+     observations: Advance-decline ratios are declining, and new highs are decreasing.
+     interpretation: This indicates a potential late-cycle scenario where fewer stocks are driving the market....
+
+  📊 domain_name: Sentiment
+     summary: Sentiment remains cautious with mixed indicators.
+     observations: Surveys show a neutral outlook among investors.
+     interpretation: Cautious sentiment reflects uncertainty in the market's direction....
+
+  📊 domain_name: Volatility
+     summary: Volatility indicators suggest stability in the market.
+     observations: VIX is low, indicating low expected volatility.
+     interpretation: Stable volatility suggests that the market is not pricing in significant risks....
+
+  📊 domain_name: Credit / Liquidity
+     summary: Credit conditions remain stable with no signs of stress.
+     observations: Credit spreads are tight and liquidity is abundant.
+     interpretation: This indicates a healthy credit environment supporting market stability....
+
+  📊 domain_name: Macro Trend
+     summary: Macro indicators show signs of deceleration but not contraction.
+     observations: Economic growth indicators are slowing but remain positive.
+     interpretation: The macro environment is softening, indicating a potential slowdown ahead....
+
+==========================================================================================
+  DELTA ANALYSIS (Market Fragility Engine)
+==========================================================================================
+
+delta_asof_date (asofDate): 2025-11-07
+delta_fragility_color (fragilityColor): YELLOW
+delta_fragility_label (fragilityLabel): Caution Warranted
+delta_fragility_score (fragilityScore): 3/8
+delta_template_code (templateCode): B
+delta_template_name (templateName): Credit Crack
+delta_pattern_plain (patternPlain): Liquidity Stress
+delta_posture_code (postureCode): D
+delta_posture_label (postureLabel): Defensive
+delta_headline_summary (headlineSummary): Moderate liquidity stress and volatility with narrow leadership; breadth remains strong.
+delta_key_drivers (keyDrivers): [3 items]
+  1. Liquidity conditions tightening as credit spreads widen.
+  2. Volatility remains elevated but not extreme.
+  3. Leadership is concentrated, indicating potential risk.
+delta_next_watch_display (nextWatchDisplay):
+  signal: Liquidity conditions
+  condition: HYG:IEF trend
+  meaning: A worsening trend would confirm rising fragility.
+
+delta_phase_used (phaseUsed): Late Expansion
+delta_phase_confidence (phaseConfidence): 75%
+
+Dimension Scores (0=green, 1=yellow, 2=orange):
+delta_breadth (breadth): 0
+delta_liquidity (liquidity): 1
+delta_volatility (volatility): 1
+delta_leadership (leadership): 1
+
+Dimension Commentary:
+delta_breadth_text (breadthText): Breadth remains strong with broad participation in the market.
+delta_liquidity_text (liquidityText): Liquidity conditions are tightening, indicating stress.
+delta_volatility_text (volatilityText): Volatility is moderate, suggesting some uncertainty in the market.
+delta_leadership_text (leadershipText): Leadership is narrow, with few sectors driving the market.
+
+delta_rationale_bullets (rationaleBullets): [3 items]
+  1. Breadth score reflects strong market participation.
+  2. Liquidity score indicates tightening credit conditions.
+  3. Volatility score suggests moderate uncertainty.
+
+delta_plain_english_summary (plainEnglishSummary):
+  The market shows strong breadth but is experiencing tightening liquidity and moderate volatility. Leadership is narrow, which raises caution. Overall, the fragility score indicates a mixed internal risk environment, warranting a defensive posture.
+
+delta_next_triggers_detail (nextTriggersDetail): [1 items]
+  1. condition: HYG:IEF trend worsening
+     effect: Increased fragility score
+     explanation: A worsening trend in high yield vs. treasury spreads would indicate rising credit stress.
+
+==========================================================================================
+✅ Analysis complete!
+📄 Report saved to: cyclescope_analysis_2025-11-07_07-37-13.txt
+==========================================================================================
