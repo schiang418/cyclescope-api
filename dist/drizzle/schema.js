@@ -79,6 +79,7 @@ export const dailySnapshots = pgTable('daily_snapshots', {
     // Full analysis JSON (backup/reference)
     fullAnalysis: jsonb('full_analysis'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 /**
  * Status Changes Table

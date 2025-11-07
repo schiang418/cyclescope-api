@@ -203,6 +203,7 @@ export const appRouter = t.router({
                 },
                 fullAnalysis: snapshot.fullAnalysis,
                 createdAt: snapshot.createdAt,
+                updatedAt: snapshot.updatedAt,
             };
         }),
         /**
@@ -214,9 +215,10 @@ export const appRouter = t.router({
             .query(async ({ input }) => {
             const snapshots = await getSnapshotHistory(input.days);
             return snapshots.map(snapshot => {
-                // snapshot.date and snapshot.createdAt are already strings from getSnapshotHistory
+                // snapshot.date, snapshot.createdAt, and snapshot.updatedAt are already strings from getSnapshotHistory
                 const dateStr = snapshot.date;
                 const createdAtStr = snapshot.createdAt;
+                const updatedAtStr = snapshot.updatedAt;
                 return {
                     id: snapshot.id,
                     date: dateStr,
@@ -277,6 +279,7 @@ export const appRouter = t.router({
                     // fullAnalysis removed to avoid potential Date serialization issues
                     // fullAnalysis: snapshot.fullAnalysis,
                     createdAt: createdAtStr,
+                    updatedAt: updatedAtStr,
                 };
             });
         }),

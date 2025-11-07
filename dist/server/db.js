@@ -34,7 +34,10 @@ export async function saveDailySnapshot(data) {
     })
         .onConflictDoUpdate({
         target: dailySnapshots.date,
-        set: snapshotData, // Replace all fields with latest data
+        set: {
+            ...snapshotData, // Replace all fields with latest data
+            updatedAt: new Date(), // Update timestamp on every update
+        },
     })
         .returning();
     return result;
@@ -70,14 +73,16 @@ export async function getSnapshotHistory(days = 30) {
     const dataMap = new Map(snapshots.map(s => {
         // date field is already a string (YYYY-MM-DD) from database
         const dateStr = typeof s.date === 'string' ? s.date : s.date.toISOString().split('T')[0];
-        // createdAt is a timestamp, convert to ISO string
+        // createdAt and updatedAt are timestamps, convert to ISO strings
         const createdAtStr = s.createdAt instanceof Date ? s.createdAt.toISOString() : String(s.createdAt);
+        const updatedAtStr = s.updatedAt instanceof Date ? s.updatedAt.toISOString() : String(s.updatedAt);
         return [
             dateStr,
             {
                 ...s,
                 date: dateStr,
                 createdAt: createdAtStr,
+                updatedAt: updatedAtStr,
             }
         ];
     }));
@@ -138,6 +143,7 @@ export async function getSnapshotHistory(days = 30) {
             deltaNextTriggersDetail: null,
             fullAnalysis: null,
             createdAt: null,
+            updatedAt: null,
         });
     }
     return result; // Newest to oldest
