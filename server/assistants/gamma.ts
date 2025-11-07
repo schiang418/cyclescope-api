@@ -173,7 +173,11 @@ export async function runGammaAnalysis(
     throw new Error('No valid response from Gamma assistant');
   }
   
-  const fullAnalysis = assistantMessage.content[0].text.value;
+  let fullAnalysis = assistantMessage.content[0].text.value;
+  
+  // Remove markdown code blocks if present (```json ... ```)
+  fullAnalysis = fullAnalysis.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+  console.log('[Gamma] Cleaned response (removed markdown if present)');
   
   // Parse JSON output (mode='engine' always returns JSON)
   const gammaData = JSON.parse(fullAnalysis);
