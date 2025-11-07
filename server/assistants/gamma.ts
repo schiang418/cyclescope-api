@@ -184,27 +184,47 @@ export async function runGammaAnalysis(
   console.log('[Gamma] Successfully parsed JSON output');
   
   // Extract ALL fields from JSON
+  // Support both nested and flat structures for backward compatibility
+  const cycleStage = gammaData.level1.cycle_stage || {};
+  const domainStatus = gammaData.level1.domain_status || {};
+  const overallSummary = gammaData.level1.overall_summary || {};
+  
+  // Convert domain_status object to domains array if needed
+  let domains = gammaData.level1.domains;
+  if (!domains && domainStatus) {
+    domains = Object.entries(domainStatus).map(([name, data]: [string, any]) => ({
+      domain_name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
+      observations: data.observations || '',
+      interpretation: data.interpretation || '',
+      bias_label: data.bias || 'Neutral',
+      bias_emoji: data.bias_emoji || '🟡',
+      strength_label: data.strength || 'Medium',
+      status_summary: data.interpretation || '',
+      color_code: data.bias_emoji || '🟡'
+    }));
+  }
+  
   const result: GammaAnalysisResult = {
-    // Level 1
+    // Level 1 - support both nested and flat structures
     asofWeek: gammaData.level1.asof_week,
-    cycleStagePrimary: gammaData.level1.cycle_stage_primary,
-    cycleStageTransition: gammaData.level1.cycle_stage_transition,
-    macroPostureLabel: gammaData.level1.macro_posture_label,
-    headlineSummary: gammaData.level1.headline_summary,
-    domains: gammaData.level1.domains, // Full array with all domain data
+    cycleStagePrimary: cycleStage.primary || gammaData.level1.cycle_stage_primary || 'Unknown',
+    cycleStageTransition: cycleStage.transition || gammaData.level1.cycle_stage_transition || 'Monitoring',
+    macroPostureLabel: cycleStage.macro_posture || gammaData.level1.macro_posture_label || 'Neutral',
+    headlineSummary: overallSummary.summary || gammaData.level1.headline_summary || 'Analysis complete',
+    domains: domains || [],
     
-    // Level 2
-    phaseConfidence: gammaData.level2.phase_confidence,
-    cycleTone: gammaData.level2.cycle_tone,
-    overallSummary: gammaData.level2.overall_summary,
-    domainDetails: gammaData.level2.domain_details, // Full array with detailed analysis
+    // Level 2 - support both nested and flat structures
+    phaseConfidence: cycleStage.phase_confidence || gammaData.level2.phase_confidence || '75%',
+    cycleTone: cycleStage.tone || gammaData.level2.cycle_tone || 'Neutral',
+    overallSummary: gammaData.level2.overall_summary || overallSummary.summary || 'Analysis complete',
+    domainDetails: gammaData.level2.domain_details || [],
     
     fullAnalysis: gammaData,
   };
   
   console.log('[Gamma] Analysis complete - ALL fields extracted');
   console.log('[Gamma] Cycle stage:', result.cycleStagePrimary);
-  console.log('[Gamma] Domains extracted:', result.domains.length);
+  console.log('[Gamma] Domains extracted:', Array.isArray(result.domains) ? result.domains.length : 'N/A');
   
   return result;
 }
