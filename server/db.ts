@@ -77,11 +77,13 @@ export async function getSnapshotHistory(days: number = 30) {
     .orderBy(desc(dailySnapshots.date));
   
   // Create map of existing data by date string
-  // Convert Date objects to strings to avoid serialization errors
+  // date is now a string (YYYY-MM-DD), createdAt is a Date object
   const dataMap = new Map(
     snapshots.map(s => {
-      const dateStr = s.date instanceof Date ? s.date.toISOString().split('T')[0] : s.date;
-      const createdAtStr = s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt;
+      // date field is already a string (YYYY-MM-DD) from database
+      const dateStr = typeof s.date === 'string' ? s.date : s.date.toISOString().split('T')[0];
+      // createdAt is a timestamp, convert to ISO string
+      const createdAtStr = s.createdAt instanceof Date ? s.createdAt.toISOString() : String(s.createdAt);
       
       return [
         dateStr,
