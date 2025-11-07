@@ -60,13 +60,40 @@ export async function runGammaAnalysis(mode = 'engine', date) {
     const thread = await client.beta.threads.create();
     // Prepare chart URLs
     const chartUrls = GAMMA_CHARTS.map(chart => `${GAMMA_CHART_BASE_URL}${chart.id}_${chart.name}.png`);
-    // Create message with all chart URLs
-    const chartList = GAMMA_CHARTS.map((chart, idx) => `${idx + 1}. [${chart.domain}] ${chart.name}: ${chartUrls[idx]}`).join('\n');
-    await client.beta.threads.messages.create(thread.id, {
-        role: 'user',
-        content: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nPlease analyze these 18 market charts and provide domain-by-domain assessment:\n\n${chartList}\n\nProvide analysis for each of the 6 domains: MACRO, LEADERSHIP, BREADTH, CREDIT, VOLATILITY, SENTIMENT.`,
-    });
-    // Run assistant
+    // CRITICAL FIX: Send charts in 2 batches (9 + 9) to match working local test
+    // Sending all 18 images in one message causes OpenAI to give generic observations
+    // Splitting into batches allows proper detailed analysis with specific indicator values
+    const batchSize = 9;
+    const totalBatches = 2;
+    console.log(`[Gamma] Sending ${chartUrls.length} charts in ${totalBatches} batches...`);
+    for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+        const startIdx = batchNum * batchSize;
+        const endIdx = Math.min(startIdx + batchSize, chartUrls.length);
+        const batchUrls = chartUrls.slice(startIdx, endIdx);
+        const messageContent = [];
+        // Add command only in first batch
+        if (batchNum === 0) {
+            messageContent.push({
+                type: 'text',
+                text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nCRITICAL: For each domain in level2 domain_details, you MUST:\n1. READ the actual numeric indicator values from the chart images\n2. Include SPECIFIC VALUES in the "observations" field (e.g., "XLY/XLP = 1.5, IWF/IWD = 1.1")\n3. DO NOT use generic descriptions - quote the actual numbers you see\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().`
+            });
+        }
+        // Add chart images for this batch
+        for (const chartUrl of batchUrls) {
+            messageContent.push({
+                type: 'image_url',
+                image_url: { url: chartUrl }
+            });
+        }
+        console.log(`[Gamma] Batch ${batchNum + 1}/${totalBatches}: Sending ${batchUrls.length} charts (${startIdx + 1}-${endIdx})`);
+        await client.beta.threads.messages.create(thread.id, {
+            role: 'user',
+            content: messageContent,
+        });
+    }
+    console.log('[Gamma] All batches sent successfully');
+    // Run assistant (after all batches are sent)
+    console.log('[Gamma] Running assistant...');
     const run = await client.beta.threads.runs.create(thread.id, {
         assistant_id: GAMMA_ASSISTANT_ID,
     });

@@ -55,11 +55,26 @@ export async function runDeltaAnalysis(mode = 'engine', date) {
     const thread = await client.beta.threads.create();
     // Prepare chart URLs
     const chartUrls = DELTA_CHARTS.map(chart => `${DELTA_CHART_BASE_URL}${chart.id}_${chart.name}.png`);
-    // Create message with all chart URLs
-    const chartList = DELTA_CHARTS.map((chart, idx) => `${idx + 1}. [${chart.dimension}] ${chart.name}: ${chartUrls[idx]}`).join('\n');
+    // Create chart descriptions for context
+    const chartDescriptions = DELTA_CHARTS.map((chart, idx) => `${idx + 1}. [${chart.dimension}] ${chart.name}`).join('\n');
+    // CRITICAL FIX: Send actual images using image_url type instead of plain text URLs
+    // This allows the AI to actually SEE the charts and read indicator values
+    const messageContent = [
+        {
+            type: "text",
+            text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nThe charts are attached below as images.`
+        },
+        // Add all chart images
+        ...chartUrls.map(url => ({
+            type: "image_url",
+            image_url: {
+                url: url
+            }
+        }))
+    ];
     await client.beta.threads.messages.create(thread.id, {
         role: 'user',
-        content: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartList}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.`,
+        content: messageContent,
     });
     // Run assistant
     const run = await client.beta.threads.runs.create(thread.id, {
