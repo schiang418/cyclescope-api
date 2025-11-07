@@ -309,7 +309,8 @@ export const appRouter = t.router({
               nextTriggersDetail: snapshot.deltaNextTriggersDetail,
             },
             
-            fullAnalysis: snapshot.fullAnalysis,
+            // fullAnalysis removed to avoid potential Date serialization issues
+            // fullAnalysis: snapshot.fullAnalysis,
             createdAt: createdAtStr,
           };
         });
