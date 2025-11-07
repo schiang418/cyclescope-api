@@ -147,9 +147,10 @@ export async function runGammaAnalysis(
   });
   console.log('[Gamma] Batch 2/2: Sent next 9 charts');
   
-  // Run assistant
+  // Run assistant with explicit text response format
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: GAMMA_ASSISTANT_ID,
+    response_format: { type: 'text' },
   });
   
   // Wait for completion
