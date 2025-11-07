@@ -99,14 +99,25 @@ export async function runGammaAnalysis(
     `${GAMMA_CHART_BASE_URL}${chart.id}_${chart.name}.png`
   );
   
-  // Create message with all chart URLs
-  const chartList = GAMMA_CHARTS.map((chart, idx) => 
-    `${idx + 1}. [${chart.domain}] ${chart.name}: ${chartUrls[idx]}`
-  ).join('\n');
+  // Create message with images (matching local test implementation)
+  const messageContent: any[] = [
+    {
+      type: 'text',
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().`
+    }
+  ];
+  
+  // Add all chart images
+  for (const chartUrl of chartUrls) {
+    messageContent.push({
+      type: 'image_url',
+      image_url: { url: chartUrl }
+    });
+  }
   
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
-    content: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nPlease analyze these 18 market charts and provide domain-by-domain assessment:\n\n${chartList}\n\nProvide analysis for each of the 6 domains: MACRO, LEADERSHIP, BREADTH, CREDIT, VOLATILITY, SENTIMENT.`,
+    content: messageContent,
   });
   
   // Run assistant
