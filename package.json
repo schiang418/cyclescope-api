@@ -11,7 +11,8 @@
     "start:prod": "drizzle-kit push && node dist/server/index.js",    
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "test:openai": "tsx server/test-openai-connection.ts"
+    "test:openai": "tsx server/test-openai-connection.ts",
+    "test:image": "tsx server/test-single-image.ts"
   },
   "keywords": [
     "market-analysis",
