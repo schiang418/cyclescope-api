@@ -158,7 +158,11 @@ export async function runGammaAnalysis(
   
   while (runStatus.status !== 'completed') {
     if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
-      throw new Error(`Gamma analysis failed: ${runStatus.status}`);
+      // Log detailed error information from OpenAI
+      console.error('[Gamma] Run failed with status:', runStatus.status);
+      console.error('[Gamma] Last error:', JSON.stringify(runStatus.last_error, null, 2));
+      console.error('[Gamma] Full run status:', JSON.stringify(runStatus, null, 2));
+      throw new Error(`Gamma analysis failed: ${runStatus.status}. Error: ${JSON.stringify(runStatus.last_error)}`);
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
