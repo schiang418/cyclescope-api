@@ -244,13 +244,9 @@ export const appRouter = t.router({
         const snapshots = await getSnapshotHistory(input.days);
         
         return snapshots.map(snapshot => {
-          const dateStr = snapshot.date instanceof Date 
-            ? snapshot.date.toISOString().split('T')[0]
-            : (typeof snapshot.date === 'string' ? snapshot.date : null);
-          
-          const createdAtStr = snapshot.createdAt instanceof Date
-            ? snapshot.createdAt.toISOString()
-            : (snapshot.createdAt || null);
+          // snapshot.date and snapshot.createdAt are already strings from getSnapshotHistory
+          const dateStr = snapshot.date;
+          const createdAtStr = snapshot.createdAt;
           
           return {
             id: snapshot.id,
