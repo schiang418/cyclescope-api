@@ -159,6 +159,7 @@ export async function getSnapshotHistory(days: number = 30) {
       deltaNextTriggersDetail: null,
       fullAnalysis: null,
       createdAt: null,
+      updatedAt: null,
     });
   }
   
