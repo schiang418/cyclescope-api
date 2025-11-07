@@ -246,7 +246,11 @@ export const appRouter = t.router({
         return snapshots.map(snapshot => {
           const dateStr = snapshot.date instanceof Date 
             ? snapshot.date.toISOString().split('T')[0]
-            : snapshot.date;
+            : (typeof snapshot.date === 'string' ? snapshot.date : null);
+          
+          const createdAtStr = snapshot.createdAt instanceof Date
+            ? snapshot.createdAt.toISOString()
+            : (snapshot.createdAt || null);
           
           return {
             id: snapshot.id,
@@ -310,7 +314,7 @@ export const appRouter = t.router({
             },
             
             fullAnalysis: snapshot.fullAnalysis,
-            createdAt: snapshot.createdAt,
+            createdAt: createdAtStr,
           };
         });
       }),
