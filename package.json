@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test:openai": "tsx server/test-openai-connection.ts",
-    "test:image": "tsx server/test-single-image.ts"
+    "test:image": "tsx server/test-single-image.ts",
+    "check:db": "tsx server/check-db.ts"
   },
   "keywords": [
     "market-analysis",
