@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, jsonb, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, jsonb, integer, date } from 'drizzle-orm/pg-core';
 
 /**
  * Daily Snapshots Table - COMPLETE VERSION
@@ -7,7 +7,7 @@ import { pgTable, serial, text, timestamp, jsonb, integer } from 'drizzle-orm/pg
  */
 export const dailySnapshots = pgTable('daily_snapshots', {
   id: serial('id').primaryKey(),
-  date: timestamp('date').notNull().unique(), // One snapshot per day
+  date: date('date').notNull().unique(), // One snapshot per day (date only, no time)
   
   // ========================================
   // FUSION ASSISTANT RESULTS (Layer 1 + Layer 2)

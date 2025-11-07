@@ -25,7 +25,10 @@ export async function saveDailySnapshot(data: InsertDailySnapshot & { analysisDa
   
   // Use provided date or current market date (ET)
   const dateStr = analysisDate || getMarketDate();
-  const dateObj = new Date(dateStr + 'T00:00:00Z'); // Ensure UTC midnight
+  
+  // IMPORTANT: Store as date string (YYYY-MM-DD) only, no time component
+  // This ensures UPSERT works correctly - same date = same record
+  const datePart = dateStr.split('T')[0]; // Extract YYYY-MM-DD part
   
   // UPSERT: Insert new or update existing for this date
   // This ensures only 1 snapshot per day (latest update wins)
@@ -33,7 +36,7 @@ export async function saveDailySnapshot(data: InsertDailySnapshot & { analysisDa
     .insert(dailySnapshots)
     .values({
       ...snapshotData,
-      date: dateObj,
+      date: datePart, // Store as date string
     })
     .onConflictDoUpdate({
       target: dailySnapshots.date,
