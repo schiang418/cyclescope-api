@@ -73,11 +73,21 @@ export async function getSnapshotHistory(days: number = 30) {
     .orderBy(desc(dailySnapshots.date));
   
   // Create map of existing data by date string
+  // Convert Date objects to strings to avoid serialization errors
   const dataMap = new Map(
-    snapshots.map(s => [
-      s.date instanceof Date ? s.date.toISOString().split('T')[0] : s.date,
-      s
-    ])
+    snapshots.map(s => {
+      const dateStr = s.date instanceof Date ? s.date.toISOString().split('T')[0] : s.date;
+      const createdAtStr = s.createdAt instanceof Date ? s.createdAt.toISOString() : s.createdAt;
+      
+      return [
+        dateStr,
+        {
+          ...s,
+          date: dateStr,
+          createdAt: createdAtStr,
+        }
+      ];
+    })
   );
   
   // Fill all dates in range (newest to oldest)
