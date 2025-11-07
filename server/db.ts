@@ -64,12 +64,13 @@ export async function getSnapshotHistory(days: number = 30) {
   // Calculate cutoff date
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - days);
+  const cutoffDateStr = cutoffDate.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' string
   
   // Get all snapshots within the date range
   const snapshots = await db
     .select()
     .from(dailySnapshots)
-    .where(sql`${dailySnapshots.date} >= ${cutoffDate}`)
+    .where(sql`${dailySnapshots.date} >= ${cutoffDateStr}`)
     .orderBy(desc(dailySnapshots.date));
   
   // Create map of existing data by date string
