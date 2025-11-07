@@ -99,26 +99,53 @@ export async function runGammaAnalysis(
     `${GAMMA_CHART_BASE_URL}${chart.id}_${chart.name}.png`
   );
   
-  // Create message with images (matching local test implementation)
-  const messageContent: any[] = [
+  // BATCH MODE: Send charts in 2 batches (9 + 9) for better reliability
+  console.log('[Gamma] Using batch mode: 2 batches of 9 charts each');
+  
+  // Batch 1: First 9 charts with prompt
+  const batch1Content: any[] = [
     {
       type: 'text',
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().`
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().\n\nBatch 1 of 2: First 9 charts`
     }
   ];
   
-  // Add all chart images
-  for (const chartUrl of chartUrls) {
-    messageContent.push({
+  for (let i = 0; i < 9; i++) {
+    batch1Content.push({
       type: 'image_url',
-      image_url: { url: chartUrl }
+      image_url: { url: chartUrls[i] }
     });
   }
   
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
-    content: messageContent,
+    content: batch1Content,
   });
+  console.log('[Gamma] Batch 1/2: Sent first 9 charts');
+  
+  // Small delay between batches
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Batch 2: Next 9 charts
+  const batch2Content: any[] = [
+    {
+      type: 'text',
+      text: 'Batch 2 of 2: Next 9 charts'
+    }
+  ];
+  
+  for (let i = 9; i < 18; i++) {
+    batch2Content.push({
+      type: 'image_url',
+      image_url: { url: chartUrls[i] }
+    });
+  }
+  
+  await client.beta.threads.messages.create(thread.id, {
+    role: 'user',
+    content: batch2Content,
+  });
+  console.log('[Gamma] Batch 2/2: Sent next 9 charts');
   
   // Run assistant
   const run = await client.beta.threads.runs.create(thread.id, {

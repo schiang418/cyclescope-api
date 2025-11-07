@@ -39,16 +39,61 @@ export const appRouter = t.router({
       
       try {
         // Step 1: Run Gamma analysis (18 charts)
-        console.log('[API] Step 1/3: Running Gamma analysis...');
+        console.log('[API] TESTING MODE: Running Gamma analysis ONLY...');
         const gammaResult = await runGammaAnalysis('engine', analysisDate);
         
-        // Step 2: Run Delta analysis (14 charts)
-        console.log('[API] Step 2/3: Running Delta analysis...');
-        const deltaResult = await runDeltaAnalysis('engine', analysisDate);
+        // TEMPORARILY DISABLED: Delta and Fusion (testing Gamma first)
+        console.log('[API] Delta and Fusion are temporarily disabled for testing');
         
-        // Step 3: Run Fusion synthesis
-        console.log('[API] Step 3/3: Running Fusion synthesis...');
-        const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
+        // Create mock results for Delta and Fusion to satisfy database schema
+        const deltaResult = {
+          asofDate: analysisDate || new Date().toISOString().split('T')[0],
+          fragilityColor: 'TESTING',
+          fragilityLabel: 'Testing Mode',
+          fragilityScore: 0,
+          templateCode: 'TEST',
+          templateName: 'Testing',
+          patternPlain: 'Testing Gamma only',
+          postureCode: 'T',
+          postureLabel: 'Testing',
+          headlineSummary: 'Testing mode - Delta disabled',
+          keyDrivers: ['Testing mode'],
+          nextWatchDisplay: {},
+          phaseUsed: 'Testing',
+          phaseConfidence: '0%',
+          breadth: 0,
+          liquidity: 0,
+          volatility: 0,
+          leadership: 0,
+          breadthText: 'Testing mode',
+          liquidityText: 'Testing mode',
+          volatilityText: 'Testing mode',
+          leadershipText: 'Testing mode',
+          rationaleBullets: ['Testing mode'],
+          plainEnglishSummary: 'Testing mode - Delta disabled',
+          nextTriggersDetail: [],
+          fullAnalysis: {}
+        };
+        
+        const fusionResult = {
+          asofDate: analysisDate || new Date().toISOString().split('T')[0],
+          cycleStage: 'Testing',
+          fragilityColor: 'TESTING',
+          fragilityLabel: 'Testing Mode',
+          guidanceLabel: 'Testing',
+          headlineSummary: 'Testing mode - Fusion disabled',
+          cycleTone: 'Testing',
+          narrativeSummary: 'Testing mode - Fusion disabled',
+          guidanceBullets: ['Testing mode'],
+          watchCommentary: 'Testing mode',
+          fullAnalysis: {}
+        };
+        
+        // Step 2 & 3: DISABLED FOR TESTING
+        // console.log('[API] Step 2/3: Running Delta analysis...');
+        // const deltaResult = await runDeltaAnalysis('engine', analysisDate);
+        // console.log('[API] Step 3/3: Running Fusion synthesis...');
+        // const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
         
         // Step 4: Save to database
         console.log('[API] Saving results to database...');

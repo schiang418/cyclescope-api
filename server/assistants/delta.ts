@@ -113,26 +113,53 @@ export async function runDeltaAnalysis(
     `${idx + 1}. [${chart.dimension}] ${chart.name}`
   ).join('\n');
   
-  // CRITICAL FIX: Send actual images using image_url type instead of plain text URLs
-  // This allows the AI to actually SEE the charts and read indicator values
-  const messageContent: Array<{type: string; text?: string; image_url?: {url: string}}> = [
+  // BATCH MODE: Send charts in 2 batches (7 + 7) for better reliability
+  console.log('[Delta] Using batch mode: 2 batches of 7 charts each');
+  
+  // Batch 1: First 7 charts with prompt
+  const batch1Content: any[] = [
     {
       type: "text",
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nThe charts are attached below as images.`
-    },
-    // Add all chart images
-    ...chartUrls.map(url => ({
-      type: "image_url" as const,
-      image_url: {
-        url: url
-      }
-    }))
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nBatch 1 of 2: First 7 charts`
+    }
   ];
+  
+  for (let i = 0; i < 7; i++) {
+    batch1Content.push({
+      type: 'image_url',
+      image_url: { url: chartUrls[i] }
+    });
+  }
   
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
-    content: messageContent as any,
+    content: batch1Content,
   });
+  console.log('[Delta] Batch 1/2: Sent first 7 charts');
+  
+  // Small delay between batches
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Batch 2: Next 7 charts
+  const batch2Content: any[] = [
+    {
+      type: 'text',
+      text: 'Batch 2 of 2: Next 7 charts'
+    }
+  ];
+  
+  for (let i = 7; i < 14; i++) {
+    batch2Content.push({
+      type: 'image_url',
+      image_url: { url: chartUrls[i] }
+    });
+  }
+  
+  await client.beta.threads.messages.create(thread.id, {
+    role: 'user',
+    content: batch2Content,
+  });
+  console.log('[Delta] Batch 2/2: Sent next 7 charts');
   
   // Run assistant
   const run = await client.beta.threads.runs.create(thread.id, {
