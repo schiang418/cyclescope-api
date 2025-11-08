@@ -102,6 +102,8 @@ export async function runGammaAnalysis(
   
   // BATCH MODE: Send charts in 2 batches (9 + 9) for better reliability
   console.log('[Gamma] Using batch mode: 2 batches of 9 charts each');
+  console.log('[Gamma] Chart URLs to be sent:');
+  chartUrls.forEach((url, i) => console.log(`  [${i + 1}] ${url}`));
   
   // Batch 1: First 9 charts with prompt
   const batch1Content: any[] = [
@@ -123,6 +125,10 @@ export async function runGammaAnalysis(
     content: batch1Content,
   });
   console.log('[Gamma] Batch 1/2: Sent first 9 charts');
+  console.log('[Gamma] Batch 1 URLs:');
+  for (let i = 0; i < 9; i++) {
+    console.log(`  [${i + 1}] ${chartUrls[i]}`);
+  }
   
   // Small delay between batches
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -147,6 +153,10 @@ export async function runGammaAnalysis(
     content: batch2Content,
   });
   console.log('[Gamma] Batch 2/2: Sent next 9 charts');
+  console.log('[Gamma] Batch 2 URLs:');
+  for (let i = 9; i < 18; i++) {
+    console.log(`  [${i + 1}] ${chartUrls[i]}`);
+  }
   
   // Run assistant with explicit text response format
   console.log('[Gamma] About to create run with:');
