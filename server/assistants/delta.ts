@@ -199,8 +199,26 @@ export async function runDeltaAnalysis(
   
   const fullAnalysis = assistantMessage.content[0].text.value;
   
-  // Parse JSON output (mode='engine' always returns JSON)
-  const deltaData = JSON.parse(fullAnalysis);
+  // Log the raw response for debugging
+  console.log('[Delta] Raw response (first 200 chars):', fullAnalysis.substring(0, 200));
+  
+  // Try to extract JSON from markdown code blocks if present
+  let jsonString = fullAnalysis;
+  const jsonMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonString = jsonMatch[1].trim();
+    console.log('[Delta] Extracted JSON from markdown code block');
+  }
+  
+  // Parse JSON output (mode='engine' should return JSON)
+  let deltaData;
+  try {
+    deltaData = JSON.parse(jsonString);
+  } catch (parseError) {
+    console.error('[Delta] JSON parse failed!');
+    console.error('[Delta] Full response:', fullAnalysis);
+    throw new Error(`Failed to parse Delta response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+  }
   console.log('[Delta] Successfully parsed JSON output');
   
   // Extract ALL fields from JSON
