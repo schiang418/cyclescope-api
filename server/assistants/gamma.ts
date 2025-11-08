@@ -148,21 +148,38 @@ export async function runGammaAnalysis(
   console.log('[Gamma] Batch 2/2: Sent next 9 charts');
   
   // Run assistant with explicit text response format
+  console.log('[Gamma] About to create run with:');
+  console.log('  Assistant ID:', GAMMA_ASSISTANT_ID);
+  console.log('  Thread ID:', thread.id);
+  console.log('  Response format:', { type: 'text' });
+  console.log('  Total images sent:', chartUrls.length);
+  
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: GAMMA_ASSISTANT_ID,
     response_format: { type: 'text' },
   });
+  
+  console.log('[Gamma] Run created successfully');
+  console.log('  Run ID:', run.id);
+  console.log('  Initial status:', run.status);
   
   // Wait for completion
   let runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
   
   while (runStatus.status !== 'completed') {
     if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
-      // Log detailed error information from OpenAI
-      console.error('[Gamma] Run failed with status:', runStatus.status);
-      console.error('[Gamma] Last error:', JSON.stringify(runStatus.last_error, null, 2));
+      // CRITICAL: Log OpenAI's actual error reason
+      console.error('='.repeat(80));
+      console.error('[Gamma] ❌ RUN FAILED');
+      console.error('[Gamma] Status:', runStatus.status);
+      console.error('[Gamma] Last error:', runStatus.last_error);
+      console.error('[Gamma] Last error (JSON):', JSON.stringify(runStatus.last_error, null, 2));
+      console.error('[Gamma] Run ID:', run.id);
+      console.error('[Gamma] Thread ID:', thread.id);
+      console.error('[Gamma] Assistant ID:', GAMMA_ASSISTANT_ID);
       console.error('[Gamma] Full run status:', JSON.stringify(runStatus, null, 2));
-      throw new Error(`Gamma analysis failed: ${runStatus.status}. Error: ${JSON.stringify(runStatus.last_error)}`);
+      console.error('='.repeat(80));
+      throw new Error(`Gamma analysis failed: ${runStatus.last_error?.message || runStatus.status}`);
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
