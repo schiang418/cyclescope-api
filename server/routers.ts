@@ -35,7 +35,7 @@ export const appRouter = t.router({
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = dirname(__filename);
-      const versionPath = join(__dirname, '..', 'version.json');
+      const versionPath = join(__dirname, 'version.json');
       const versionData = JSON.parse(readFileSync(versionPath, 'utf-8'));
       return {
         ...versionData,
