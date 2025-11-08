@@ -23,26 +23,26 @@ const DELTA_CHART_BASE_URL = 'https://cyclescope-delta-dashboard-production.up.r
 const DELTA_CHARTS = [
   // BREADTH (3 charts)
   { id: '01', name: 'SPXA50R', dimension: 'BREADTH' },
-  { id: '02', name: 'SPXA200R', dimension: 'BREADTH' },
-  { id: '03', name: 'NYHL', dimension: 'BREADTH' },
+  { id: '02', name: 'SPXA150R', dimension: 'BREADTH' },
+  { id: '03', name: 'SPXA200R', dimension: 'BREADTH' },
   
   // LIQUIDITY/CREDIT (2 charts)
-  { id: '04', name: 'HYG_LQD', dimension: 'LIQUIDITY_CREDIT' },
-  { id: '05', name: 'TLT', dimension: 'LIQUIDITY_CREDIT' },
+  { id: '04', name: 'HYG_IEF', dimension: 'LIQUIDITY_CREDIT' },
+  { id: '05', name: 'LQD_IEF', dimension: 'LIQUIDITY_CREDIT' },
   
   // VOLATILITY (3 charts)
-  { id: '06', name: 'VIX', dimension: 'VOLATILITY' },
-  { id: '07', name: 'VIX9D', dimension: 'VOLATILITY' },
-  { id: '08', name: 'VVIX', dimension: 'VOLATILITY' },
+  { id: '06', name: 'VIX_VXV', dimension: 'VOLATILITY' },
+  { id: '07', name: 'VVIX', dimension: 'VOLATILITY' },
+  { id: '08', name: 'VIX', dimension: 'VOLATILITY' },
   
   // LEADERSHIP (2 charts)
-  { id: '09', name: 'XLY_XLP', dimension: 'LEADERSHIP' },
-  { id: '10', name: 'IWM_SPY', dimension: 'LEADERSHIP' },
+  { id: '09', name: 'RSP_SPY', dimension: 'LEADERSHIP' },
+  { id: '10', name: 'SMH_SPY', dimension: 'LEADERSHIP' },
   
   // OPTIONALS (4 charts)
-  { id: '11', name: 'DXY', dimension: 'OPTIONAL' },
-  { id: '12', name: 'GLD', dimension: 'OPTIONAL' },
-  { id: '13', name: 'CL', dimension: 'OPTIONAL' },
+  { id: '11', name: 'CPCE', dimension: 'OPTIONAL' },
+  { id: '12', name: 'XLY_XLP', dimension: 'OPTIONAL' },
+  { id: '13', name: 'IWFIWDV', dimension: 'OPTIONAL' },
   { id: '14', name: 'USD', dimension: 'OPTIONAL' },
 ];
 
@@ -115,6 +115,8 @@ export async function runDeltaAnalysis(
   
   // BATCH MODE: Send charts in 2 batches (7 + 7) for better reliability
   console.log('[Delta] Using batch mode: 2 batches of 7 charts each');
+  console.log('[Delta] Chart URLs to be sent:');
+  chartUrls.forEach((url, i) => console.log(`  [${i + 1}] ${url}`));
   
   // Batch 1: First 7 charts with prompt
   const batch1Content: any[] = [
@@ -136,6 +138,10 @@ export async function runDeltaAnalysis(
     content: batch1Content,
   });
   console.log('[Delta] Batch 1/2: Sent first 7 charts');
+  console.log('[Delta] Batch 1 URLs:');
+  for (let i = 0; i < 7; i++) {
+    console.log(`  [${i + 1}] ${chartUrls[i]}`);
+  }
   
   // Small delay between batches
   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -160,6 +166,10 @@ export async function runDeltaAnalysis(
     content: batch2Content,
   });
   console.log('[Delta] Batch 2/2: Sent next 7 charts');
+  console.log('[Delta] Batch 2 URLs:');
+  for (let i = 7; i < 14; i++) {
+    console.log(`  [${i + 1}] ${chartUrls[i]}`);
+  }
   
   // Run assistant
   const run = await client.beta.threads.runs.create(thread.id, {
