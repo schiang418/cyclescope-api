@@ -1,5 +1,8 @@
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { runGammaAnalysis } from './assistants/gamma.js';
 import { runDeltaAnalysis } from './assistants/delta.js';
 import { runFusionAnalysis } from './assistants/fusion.js';
@@ -23,6 +26,30 @@ export const appRouter = t.router({
       timestamp: new Date().toISOString(),
       service: 'CycleScope API',
     };
+  }),
+
+  /**
+   * Version check endpoint
+   */
+  version: t.procedure.query(() => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      const versionPath = join(__dirname, '..', 'version.json');
+      const versionData = JSON.parse(readFileSync(versionPath, 'utf-8'));
+      return {
+        ...versionData,
+        currentTime: new Date().toISOString(),
+        nodeVersion: process.version,
+        platform: process.platform,
+      };
+    } catch (error) {
+      return {
+        error: 'Version file not found',
+        currentTime: new Date().toISOString(),
+        nodeVersion: process.version,
+      };
+    }
   }),
 
   /**
