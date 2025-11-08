@@ -128,12 +128,13 @@ export async function runGammaAnalysis(
   console.log('[Gamma] About to create run with:');
   console.log('  Assistant ID:', GAMMA_ASSISTANT_ID);
   console.log('  Thread ID:', thread.id);
-  console.log('  Response format:', { type: 'text' });
-  console.log('  Total images sent:', chartUrls.length);
+  console.log('  Response format: AUTO (Vision API compatible)');
+  console.log('  Total images sent:', 9);
   
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: GAMMA_ASSISTANT_ID,
-    response_format: { type: 'text' },
+    // Note: response_format MUST be omitted when using Vision API (images)
+    // Setting response_format with images causes 'invalid_image_format' error
   });
   
   console.log('[Gamma] Run created successfully');
