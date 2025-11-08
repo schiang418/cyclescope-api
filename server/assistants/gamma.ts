@@ -87,6 +87,7 @@ export async function runGammaAnalysis(
   date?: string
 ): Promise<GammaAnalysisResult> {
   const analysisDate = date || getMarketDate();
+  console.log('🔥🔥🔥 GAMMA VERSION: ec236a2 - WITH DETAILED ERROR LOGGING 🔥🔥🔥');
   console.log(`[Gamma] Starting analysis for ${analysisDate} (market date) with 18 charts...`);
   
   const client = getOpenAI();
