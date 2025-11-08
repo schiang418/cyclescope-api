@@ -21,35 +21,35 @@ const GAMMA_ASSISTANT_ID = process.env.GAMMA_ASSISTANT_ID || 'asst_Ynyur2GgkCWgL
 const GAMMA_CHART_BASE_URL = 'https://cyclescope-dashboard-production.up.railway.app/charts/';
 
 const GAMMA_CHARTS = [
-  // MACRO (3 charts)
+  // MACRO (4 charts)
   { id: '01', name: 'SPX_Secular_Trend', domain: 'MACRO' },
-  { id: '02', name: 'Yield_Curve', domain: 'MACRO' },
-  { id: '03', name: 'Dollar_Index', domain: 'MACRO' },
+  { id: '02', name: 'Copper_Gold_Ratio', domain: 'MACRO' },
+  { id: '03', name: 'US_Dollar_Index', domain: 'MACRO' },
+  { id: '04', name: 'Treasury_10Y_Yields', domain: 'MACRO' },
   
-  // LEADERSHIP (3 charts)
-  { id: '04', name: 'SPX_vs_EW', domain: 'LEADERSHIP' },
-  { id: '05', name: 'Tech_Leadership', domain: 'LEADERSHIP' },
-  { id: '06', name: 'Cyclical_Defensive', domain: 'LEADERSHIP' },
+  // CREDIT_LIQUIDITY (3 charts)
+  { id: '05', name: 'HYG_IEF_Ratio', domain: 'CREDIT_LIQUIDITY' },
+  { id: '06', name: 'JNK_IEF_Ratio', domain: 'CREDIT_LIQUIDITY' },
+  { id: '07', name: 'LQD_IEF_Ratio', domain: 'CREDIT_LIQUIDITY' },
+  
+  // LEADERSHIP (4 charts)
+  { id: '08', name: 'XLY_XLP_Ratio', domain: 'LEADERSHIP' },
+  { id: '09', name: 'IWF_IWD_Ratio', domain: 'LEADERSHIP' },
+  { id: '10', name: 'RSP_SPY_Ratio', domain: 'LEADERSHIP' },
+  { id: '11', name: 'XLK_XLP_Ratio', domain: 'LEADERSHIP' },
+  { id: '12', name: 'SMH_SPY_Ratio', domain: 'LEADERSHIP' },
   
   // BREADTH (3 charts)
-  { id: '07', name: 'Advance_Decline', domain: 'BREADTH' },
-  { id: '08', name: 'New_Highs_Lows', domain: 'BREADTH' },
-  { id: '09', name: 'Percent_Above_MA', domain: 'BREADTH' },
+  { id: '13', name: 'SPXA50R', domain: 'BREADTH' },
+  { id: '14', name: 'SPXA150R', domain: 'BREADTH' },
+  { id: '15', name: 'SPXA200R', domain: 'BREADTH' },
   
-  // CREDIT (3 charts)
-  { id: '10', name: 'Credit_Spreads', domain: 'CREDIT' },
-  { id: '11', name: 'High_Yield', domain: 'CREDIT' },
-  { id: '12', name: 'TED_Spread', domain: 'CREDIT' },
+  // SENTIMENT (1 chart)
+  { id: '16', name: 'CPCE_Put_Call', domain: 'SENTIMENT' },
   
-  // VOLATILITY (3 charts)
-  { id: '13', name: 'VIX', domain: 'VOLATILITY' },
-  { id: '14', name: 'VVIX', domain: 'VOLATILITY' },
-  { id: '15', name: 'Put_Call_Ratio', domain: 'VOLATILITY' },
-  
-  // SENTIMENT (3 charts)
-  { id: '16', name: 'AAII_Survey', domain: 'SENTIMENT' },
-  { id: '17', name: 'CNN_Fear_Greed', domain: 'SENTIMENT' },
-  { id: '18', name: 'Margin_Debt', domain: 'SENTIMENT' },
+  // VOLATILITY (2 charts)
+  { id: '17', name: 'VIX_VXV_Ratio', domain: 'VOLATILITY' },
+  { id: '18', name: 'VVIX', domain: 'VOLATILITY' },
 ];
 
 export interface GammaAnalysisResult {
