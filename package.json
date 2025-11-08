@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start": "node dist/server/index.js",
     "start:prod": "drizzle-kit push && node dist/server/index.js",    
     "db:push": "drizzle-kit push",
