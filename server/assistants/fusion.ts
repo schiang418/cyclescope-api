@@ -56,12 +56,18 @@ export async function runFusionAnalysis(
   date?: string
 ): Promise<FusionAnalysisResult> {
   const analysisDate = date || getMarketDate();
+  console.log('🔥🔥🔥 FUSION SYNTHESIS - Combining Gamma + Delta analyses 🔥🔥🔥');
   console.log(`[Fusion] Starting synthesis analysis for ${analysisDate} (market date)...`);
+  console.log(`[Fusion] Mode: ${mode}`);
+  console.log(`[Fusion] Input data:`);
+  console.log(`  - Gamma cycle stage: ${gammaResult.cycleStagePrimary}`);
+  console.log(`  - Delta fragility: ${deltaResult.fragilityLabel} (score: ${deltaResult.fragilityScore})`);
   
   const client = getOpenAI();
   
   // Create thread
   const thread = await client.beta.threads.create();
+  console.log(`[Fusion] Thread created: ${thread.id}`);
   
   // Pass the full JSON objects from Gamma and Delta
   const synthesisPrompt = `${mode}
@@ -83,21 +89,30 @@ Please provide:
 3. Strategic Guidance (2-3 sentences)
 `;
   
+  console.log(`[Fusion] Sending synthesis prompt (${synthesisPrompt.length} chars)...`);
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
     content: synthesisPrompt,
   });
+  console.log('[Fusion] Synthesis prompt sent successfully');
   
   // Run assistant
+  console.log(`[Fusion] Starting assistant run...`);
+  console.log(`[Fusion] Assistant ID: ${FUSION_ASSISTANT_ID}`);
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: FUSION_ASSISTANT_ID,
   });
+  console.log(`[Fusion] Run created: ${run.id}`);
   
   // Wait for completion
   let runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
   
   while (runStatus.status !== 'completed') {
     if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
+      console.error(`[Fusion] ❌ Run failed with status: ${runStatus.status}`);
+      if (runStatus.last_error) {
+        console.error('[Fusion] Last error:', JSON.stringify(runStatus.last_error, null, 2));
+      }
       throw new Error(`Fusion analysis failed: ${runStatus.status}`);
     }
     
@@ -105,6 +120,8 @@ Please provide:
     runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
     console.log(`[Fusion] Status: ${runStatus.status}`);
   }
+  
+  console.log('[Fusion] ✅ Run completed successfully');
   
   // Get response
   const messages = await client.beta.threads.messages.list(thread.id);
@@ -157,12 +174,13 @@ Please provide:
     fullAnalysis: fusionData,
   };
   
-  console.log('[Fusion] Synthesis complete - ALL fields extracted');
-  console.log('[Fusion] Results:', { 
-    cycleStage: result.cycleStage, 
-    fragilityLabel: result.fragilityLabel,
-    guidanceLabel: result.guidanceLabel
-  });
+  console.log('[Fusion] ✅ Synthesis complete - ALL fields extracted');
+  console.log('[Fusion] Results summary:');
+  console.log(`  - Cycle Stage: ${result.cycleStage}`);
+  console.log(`  - Fragility: ${result.fragilityLabel} (${result.fragilityColor})`);
+  console.log(`  - Guidance: ${result.guidanceLabel}`);
+  console.log(`  - Headline: ${result.headlineSummary.substring(0, 80)}...`);
+  console.log('[Fusion] 🎉 Fusion analysis complete!');
   
   return result;
 }
