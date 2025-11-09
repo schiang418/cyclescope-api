@@ -54,6 +54,7 @@ export const appRouter = t.router({
 
   /**
    * Trigger full analysis (Gamma + Delta + Fusion)
+   * 🔥 ASYNC MODE: Returns immediately, analysis runs in background
    */
   analysis: t.router({
     triggerAll: t.procedure
@@ -62,20 +63,25 @@ export const appRouter = t.router({
       }).optional())
       .mutation(async ({ input }) => {
         const analysisDate = input?.date;
-        console.log(`[API] Starting full analysis pipeline for ${analysisDate || 'today (ET)'}...`);
+        console.log(`[API] 🚀 Triggering full analysis pipeline for ${analysisDate || 'today (ET)'}...`);
+        console.log('[API] ⚡ Mode: ASYNC (fire-and-forget)');
       
-      try {
-        // Step 1: Run Gamma analysis (18 charts)
-        console.log('[API] Step 1/3: Running Gamma analysis...');
-        const gammaResult = await runGammaAnalysis('engine', analysisDate);
-        
-        // Step 2: Run Delta analysis (14 charts)
-        console.log('[API] Step 2/3: Running Delta analysis...');
-        const deltaResult = await runDeltaAnalysis('engine', analysisDate);
-        
-        // Step 3: Run Fusion synthesis
-        console.log('[API] Step 3/3: Running Fusion synthesis...');
-        const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
+      // 🔥 Fire-and-forget: Start analysis in background, return immediately
+      setImmediate(async () => {
+        try {
+          console.log('[API] 🔄 Background analysis started...');
+          
+          // Step 1: Run Gamma analysis (18 charts)
+          console.log('[API] Step 1/3: Running Gamma analysis...');
+          const gammaResult = await runGammaAnalysis('engine', analysisDate);
+          
+          // Step 2: Run Delta analysis (14 charts)
+          console.log('[API] Step 2/3: Running Delta analysis...');
+          const deltaResult = await runDeltaAnalysis('engine', analysisDate);
+          
+          // Step 3: Run Fusion synthesis
+          console.log('[API] Step 3/3: Running Fusion synthesis...');
+          const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
         
         // Step 4: Save to database
         console.log('[API] Saving results to database...');
@@ -162,22 +168,23 @@ export const appRouter = t.router({
           }
         }
         
-        console.log('[API] Analysis pipeline complete!');
-        
-        return {
-          success: true,
-          snapshotId: snapshot.id,
-          timestamp: snapshot.createdAt,
-          results: {
-            fusion: fusionResult,
-            gamma: gammaResult,
-            delta: deltaResult,
-          },
-        };
-      } catch (error) {
-        console.error('[API] Analysis failed:', error);
-        throw new Error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
+          console.log('[API] ✅ Background analysis pipeline complete!');
+          console.log(`[API] 💾 Snapshot ID: ${snapshot.id}`);
+          
+        } catch (error) {
+          console.error('[API] ❌ Background analysis failed:', error);
+          console.error('[API] Error details:', error instanceof Error ? error.message : 'Unknown error');
+        }
+      });
+      
+      // Return immediately (don't wait for analysis to complete)
+      return {
+        success: true,
+        message: 'Analysis started in background',
+        mode: 'async',
+        analysisDate: analysisDate || 'today (ET)',
+        estimatedCompletionTime: '2-3 minutes',
+      };
     }),
 
     /**
