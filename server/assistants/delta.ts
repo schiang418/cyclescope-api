@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { runDeltaEnhancedAnalysis } from './deltaEnhanced';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -10,6 +11,7 @@ function getOpenAI(): OpenAI {
     }
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
+      baseURL: 'https://api.openai.com/v1',  // Direct OpenAI API
     });
   }
   return openai;
@@ -95,8 +97,17 @@ export async function runDeltaAnalysis(
   mode: 'engine' | 'panel' = 'engine',
   date?: string
 ): Promise<DeltaAnalysisResult> {
+  // Check if Enhanced mode is enabled via environment variable
+  const useEnhanced = process.env.ENABLE_ENHANCED_ANALYSIS === 'true';
+  
+  if (useEnhanced) {
+    console.log('🚀 [Delta] Enhanced mode ENABLED (charts + CSV data)');
+    return runDeltaEnhancedAnalysis(mode, date);
+  }
+  
+  // Standard mode (charts only)
   const analysisDate = date || getMarketDate();
-  console.log(`[Delta] Starting analysis for ${analysisDate} (market date) with 14 charts...`);
+  console.log(`[Delta] STANDARD mode - Starting analysis for ${analysisDate} (market date) with 14 charts...`);
   
   const client = getOpenAI();
   

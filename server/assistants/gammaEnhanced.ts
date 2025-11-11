@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
-import { runGammaEnhancedAnalysis } from './gammaEnhanced';
+import { getLatestCSVDate } from './csvUploader';
+import { downloadAndFormatCSVsAsText } from './csvTextEmbedder';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -11,7 +12,7 @@ function getOpenAI(): OpenAI {
     }
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      baseURL: 'https://api.openai.com/v1',  // Direct OpenAI API
+      baseURL: 'https://api.openai.com/v1',  // Override Manus proxy
     });
   }
   return openai;
@@ -34,7 +35,7 @@ const GAMMA_CHARTS = [
   { id: '06', name: 'JNK_IEF_Ratio', domain: 'CREDIT_LIQUIDITY' },
   { id: '07', name: 'LQD_IEF_Ratio', domain: 'CREDIT_LIQUIDITY' },
   
-  // LEADERSHIP (4 charts)
+  // LEADERSHIP (5 charts)
   { id: '08', name: 'XLY_XLP_Ratio', domain: 'LEADERSHIP' },
   { id: '09', name: 'IWF_IWD_Ratio', domain: 'LEADERSHIP' },
   { id: '10', name: 'RSP_SPY_Ratio', domain: 'LEADERSHIP' },
@@ -52,6 +53,39 @@ const GAMMA_CHARTS = [
   // VOLATILITY (2 charts)
   { id: '17', name: 'VIX_VXV_Ratio', domain: 'VOLATILITY' },
   { id: '18', name: 'VVIX', domain: 'VOLATILITY' },
+];
+
+// CSV filenames mapping (18 weekly CSV files for Gamma)
+const GAMMA_CSV_FILES = [
+  // MACRO (4 files)
+  '_SPX_for_gpt_weekly.csv',
+  '_COPPER_GOLD_for_gpt_weekly.csv',
+  '_DXY_for_gpt_weekly.csv',
+  '_TNX_for_gpt_weekly.csv',
+  
+  // CREDIT_LIQUIDITY (3 files)
+  'HYG_IEF_for_gpt_weekly.csv',
+  'JNK_IEF_for_gpt_weekly.csv',
+  'LQD_IEF_for_gpt_weekly.csv',
+  
+  // LEADERSHIP (5 files)
+  'XLY_XLP_for_gpt_weekly.csv',
+  'IWF_IWD_for_gpt_weekly.csv',
+  'RSP_SPY_for_gpt_weekly.csv',
+  'XLK_XLP_for_gpt_weekly.csv',
+  'SMH_SPY_for_gpt_weekly.csv',
+  
+  // BREADTH (3 files)
+  '_SPXA50R_for_gpt_weekly.csv',
+  '_SPXA150R_for_gpt_weekly.csv',
+  '_SPXA200R_for_gpt_weekly.csv',
+  
+  // SENTIMENT (1 file)
+  '_CPCE_for_gpt_weekly.csv',
+  
+  // VOLATILITY (2 files)
+  '_VIX_VXV_for_gpt_weekly.csv',
+  '_VVIX_for_gpt_weekly.csv',
 ];
 
 export interface GammaAnalysisResult {
@@ -82,45 +116,72 @@ function getMarketDate(): string {
 }
 
 /**
- * Run Gamma Assistant analysis on 18 charts
+ * Run Gamma Assistant analysis with ENHANCED mode (18 charts + 18 CSV files)
  */
-export async function runGammaAnalysis(
+export async function runGammaEnhancedAnalysis(
   mode: 'engine' | 'panel' = 'engine',
   date?: string
 ): Promise<GammaAnalysisResult> {
-  // Check if Enhanced mode is enabled via environment variable
-  const useEnhanced = process.env.ENABLE_ENHANCED_ANALYSIS === 'true';
-  
-  if (useEnhanced) {
-    console.log('🚀 [Gamma] Enhanced mode ENABLED (charts + CSV data)');
-    return runGammaEnhancedAnalysis(mode, date);
-  }
-  
-  // Standard mode (charts only)
   const analysisDate = date || getMarketDate();
-  console.log('🔥🔥🔥 GAMMA VERSION: STANDARD - Charts Only 🔥🔥🔥');
-  console.log(`[Gamma] Starting analysis for ${analysisDate} (market date) with 18 charts...`);
+  console.log('🚀🚀🚀 GAMMA ENHANCED VERSION: Charts + CSV Data 🚀🚀🚀');
+  console.log(`[Gamma Enhanced] Starting analysis for ${analysisDate} with 18 charts + 18 CSV files...`);
   
   const client = getOpenAI();
   
-  // Create thread
+  // Step 1: Download and format CSV files as embedded text
+  let csvEmbeddedText: string = '';
+  try {
+    console.log('[Gamma Enhanced] Step 1: Downloading and formatting CSV files as text...');
+    const latestDate = await getLatestCSVDate();
+    console.log(`[Gamma Enhanced] Using CSV data from: ${latestDate}`);
+    
+    csvEmbeddedText = await downloadAndFormatCSVsAsText(latestDate, GAMMA_CSV_FILES, 20);
+    console.log(`[Gamma Enhanced] ✅ Successfully formatted CSV data as embedded text`);
+  } catch (error) {
+    console.error('[Gamma Enhanced] ⚠️ CSV formatting failed:', error);
+    console.error('[Gamma Enhanced] Continuing with charts only (degraded mode)');
+    // Continue without CSV data - charts-only mode
+  }
+  
+  // Step 2: Create thread
   const thread = await client.beta.threads.create();
   
-  // Prepare chart URLs
+  // Step 3: Prepare chart URLs
   const chartUrls = GAMMA_CHARTS.map(chart => 
     `${GAMMA_CHART_BASE_URL}${chart.id}_${chart.name}.png`
   );
   
   // BATCH MODE: Send charts in 2 batches (9 + 9) for better reliability
-  console.log('[Gamma] Using batch mode: 2 batches of 9 charts each');
-  console.log('[Gamma] Chart URLs to be sent:');
+  console.log('[Gamma Enhanced] Using batch mode: 2 batches of 9 charts each');
+  console.log('[Gamma Enhanced] Chart URLs to be sent:');
   chartUrls.forEach((url, i) => console.log(`  [${i + 1}] ${url}`));
   
-  // Batch 1: First 9 charts with prompt
+  // Batch 1: First 9 charts with prompt + embedded CSV data
+  const batch1Text = [
+    mode,
+    '',
+    'IMPORTANT: Use this exact date in your output:',
+    `Analysis Date: ${analysisDate}`,
+    '',
+    'For JSON output, use this date in the "asof_date" field in BOTH level1 and level2:',
+    `"asof_date": "${analysisDate}"`,
+    '',
+    'Please analyze the provided charts and CSV data below, and return ONLY valid JSON (no text before or after).',
+    'The output must be directly parseable by JSON.parse().',
+    '',
+    '---',
+    '',
+    csvEmbeddedText,  // Embed CSV data as text
+    '',
+    '---',
+    '',
+    'Batch 1 of 2: First 9 charts'
+  ].join('\n');
+  
   const batch1Content: any[] = [
     {
       type: 'text',
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field in BOTH level1 and level2:\n"asof_date": "${analysisDate}"\n\nPlease analyze the provided charts and return ONLY valid JSON (no text before or after).\nThe output must be directly parseable by JSON.parse().\n\nBatch 1 of 2: First 9 charts`
+      text: batch1Text
     }
   ];
   
@@ -131,12 +192,13 @@ export async function runGammaAnalysis(
     });
   }
   
+  // No attachments needed - CSV data is embedded in text
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
     content: batch1Content,
   });
-  console.log('[Gamma] Batch 1/2: Sent first 9 charts');
-  console.log('[Gamma] Batch 1 URLs:');
+  console.log('[Gamma Enhanced] Batch 1/2: Sent first 9 charts with embedded CSV data');
+  console.log('[Gamma Enhanced] Batch 1 URLs:');
   for (let i = 0; i < 9; i++) {
     console.log(`  [${i + 1}] ${chartUrls[i]}`);
   }
@@ -144,11 +206,11 @@ export async function runGammaAnalysis(
   // Small delay between batches
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Batch 2: Next 9 charts
+  // Batch 2: Next 9 charts (CSV data already sent in batch 1)
   const batch2Content: any[] = [
     {
       type: 'text',
-      text: 'Batch 2 of 2: Next 9 charts'
+      text: 'Batch 2 of 2: Next 9 charts (CSV data provided in previous message)'
     }
   ];
   
@@ -159,22 +221,24 @@ export async function runGammaAnalysis(
     });
   }
   
+  // No attachments needed - CSV data already embedded in batch 1
   await client.beta.threads.messages.create(thread.id, {
     role: 'user',
     content: batch2Content,
   });
-  console.log('[Gamma] Batch 2/2: Sent next 9 charts');
-  console.log('[Gamma] Batch 2 URLs:');
+  console.log('[Gamma Enhanced] Batch 2/2: Sent next 9 charts');
+  console.log('[Gamma Enhanced] Batch 2 URLs:');
   for (let i = 9; i < 18; i++) {
     console.log(`  [${i + 1}] ${chartUrls[i]}`);
   }
   
   // Run assistant with explicit text response format
-  console.log('[Gamma] About to create run with:');
+  console.log('[Gamma Enhanced] About to create run with:');
   console.log('  Assistant ID:', GAMMA_ASSISTANT_ID);
   console.log('  Thread ID:', thread.id);
   console.log('  Response format: AUTO (Vision API compatible)');
   console.log('  Total images sent:', chartUrls.length);
+  console.log('  CSV data: Embedded as text (no attachments)');
   
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: GAMMA_ASSISTANT_ID,
@@ -182,7 +246,7 @@ export async function runGammaAnalysis(
     // Setting response_format with images causes 'invalid_image_format' error
   });
   
-  console.log('[Gamma] Run created successfully');
+  console.log('[Gamma Enhanced] Run created successfully');
   console.log('  Run ID:', run.id);
   console.log('  Initial status:', run.status);
   
@@ -193,21 +257,53 @@ export async function runGammaAnalysis(
     if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
       // CRITICAL: Log OpenAI's actual error reason
       console.error('='.repeat(80));
-      console.error('[Gamma] ❌ RUN FAILED');
-      console.error('[Gamma] Status:', runStatus.status);
-      console.error('[Gamma] Last error:', runStatus.last_error);
-      console.error('[Gamma] Last error (JSON):', JSON.stringify(runStatus.last_error, null, 2));
-      console.error('[Gamma] Run ID:', run.id);
-      console.error('[Gamma] Thread ID:', thread.id);
-      console.error('[Gamma] Assistant ID:', GAMMA_ASSISTANT_ID);
-      console.error('[Gamma] Full run status:', JSON.stringify(runStatus, null, 2));
+      console.error('[Gamma Enhanced] ❌ RUN FAILED');
+      console.error('[Gamma Enhanced] Status:', runStatus.status);
+      console.error('[Gamma Enhanced] Last error:', runStatus.last_error);
+      console.error('[Gamma Enhanced] Last error (JSON):', JSON.stringify(runStatus.last_error, null, 2));
+      console.error('[Gamma Enhanced] Run ID:', run.id);
+      console.error('[Gamma Enhanced] Thread ID:', thread.id);
+      console.error('[Gamma Enhanced] Assistant ID:', GAMMA_ASSISTANT_ID);
+      
+      // NEW: Try to get run steps for more details
+      try {
+        console.error('[Gamma Enhanced] Fetching run steps for debugging...');
+        const runSteps = await client.beta.threads.runs.steps.list(thread.id, run.id);
+        console.error('[Gamma Enhanced] Run steps:', JSON.stringify(runSteps.data, null, 2));
+        
+        // Check for specific step failures
+        const failedSteps = runSteps.data.filter(step => step.status === 'failed');
+        if (failedSteps.length > 0) {
+          console.error('[Gamma Enhanced] Failed steps:', JSON.stringify(failedSteps, null, 2));
+        }
+      } catch (stepsError) {
+        console.error('[Gamma Enhanced] Could not fetch run steps:', stepsError);
+      }
+      
+      // NEW: Try to get thread messages to see what was sent
+      try {
+        console.error('[Gamma Enhanced] Fetching thread messages for debugging...');
+        const threadMessages = await client.beta.threads.messages.list(thread.id);
+        console.error('[Gamma Enhanced] Thread messages count:', threadMessages.data.length);
+        threadMessages.data.forEach((msg, idx) => {
+          console.error(`[Gamma Enhanced] Message ${idx + 1}:`, {
+            role: msg.role,
+            content_type: msg.content[0]?.type,
+            attachments_count: msg.attachments?.length || 0,
+          });
+        });
+      } catch (messagesError) {
+        console.error('[Gamma Enhanced] Could not fetch thread messages:', messagesError);
+      }
+      
+      console.error('[Gamma Enhanced] Full run status:', JSON.stringify(runStatus, null, 2));
       console.error('='.repeat(80));
-      throw new Error(`Gamma analysis failed: ${runStatus.last_error?.message || runStatus.status}`);
+      throw new Error(`Gamma Enhanced analysis failed: ${runStatus.last_error?.message || runStatus.status}`);
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
     runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
-    console.log(`[Gamma] Status: ${runStatus.status}`);
+    console.log(`[Gamma Enhanced] Status: ${runStatus.status}`);
   }
   
   // Get response
@@ -215,18 +311,18 @@ export async function runGammaAnalysis(
   const assistantMessage = messages.data.find(msg => msg.role === 'assistant');
   
   if (!assistantMessage || !assistantMessage.content[0] || assistantMessage.content[0].type !== 'text') {
-    throw new Error('No valid response from Gamma assistant');
+    throw new Error('No valid response from Gamma Enhanced assistant');
   }
   
   let fullAnalysis = assistantMessage.content[0].text.value;
   
   // Remove markdown code blocks if present (```json ... ```)
   fullAnalysis = fullAnalysis.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-  console.log('[Gamma] Cleaned response (removed markdown if present)');
+  console.log('[Gamma Enhanced] Cleaned response (removed markdown if present)');
   
   // Parse JSON output (mode='engine' always returns JSON)
   const gammaData = JSON.parse(fullAnalysis);
-  console.log('[Gamma] Successfully parsed JSON output');
+  console.log('[Gamma Enhanced] Successfully parsed JSON output');
   
   // Extract ALL fields from JSON
   // Support both nested and flat structures for backward compatibility
@@ -267,9 +363,10 @@ export async function runGammaAnalysis(
     fullAnalysis: gammaData,
   };
   
-  console.log('[Gamma] Analysis complete - ALL fields extracted');
-  console.log('[Gamma] Cycle stage:', result.cycleStagePrimary);
-  console.log('[Gamma] Domains extracted:', Array.isArray(result.domains) ? result.domains.length : 'N/A');
+  console.log('[Gamma Enhanced] Analysis complete - ALL fields extracted');
+  console.log('[Gamma Enhanced] Cycle stage:', result.cycleStagePrimary);
+  console.log('[Gamma Enhanced] Domains extracted:', Array.isArray(result.domains) ? result.domains.length : 'N/A');
+  console.log('[Gamma Enhanced] CSV data:', csvEmbeddedText ? 'Embedded as text' : 'Not available');
   
   return result;
 }
