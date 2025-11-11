@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { runGammaEnhancedAnalysis } from './gammaEnhanced';
+import { runGammaEnhancedAnalysis } from './gammaEnhanced.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;

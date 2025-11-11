@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { getLatestCSVDate } from './csvUploader';
-import { downloadAndFormatCSVsAsText } from './csvTextEmbedder';
+import { getLatestCSVDate } from './csvUploader.js';
+import { downloadAndFormatCSVsAsText } from './csvTextEmbedder.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;

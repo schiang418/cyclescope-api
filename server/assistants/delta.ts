@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { runDeltaEnhancedAnalysis } from './deltaEnhanced';
+import { runDeltaEnhancedAnalysis } from './deltaEnhanced.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
