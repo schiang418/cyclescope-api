@@ -1,0 +1,38 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+Error: Transform failed with 1 error:
+/eval.ts:4:18: ERROR: Top-level await is currently not supported with the "cjs" output format
+    at failureErrorWithLog (/home/ubuntu/cyclescope-api/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/ubuntu/cyclescope-api/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:736:50
+    at responseCallbacks.<computed> (/home/ubuntu/cyclescope-api/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (/home/ubuntu/cyclescope-api/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (/home/ubuntu/cyclescope-api/node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  errors: [
+    {
+      detail: undefined,
+      id: '',
+      location: {
+        column: 18,
+        file: '/eval.ts',
+        length: 5,
+        line: 4,
+        lineText: "const assistant = await client.beta.assistants.retrieve('asst_Ynyur2GgkCWgLKmuqiM8zIt2');",
+        namespace: '',
+        suggestion: ''
+      },
+      notes: [],
+      pluginName: '',
+      text: 'Top-level await is currently not supported with the "cjs" output format'
+    }
+  ],
+  warnings: []
+}
+
+Node.js v22.13.0

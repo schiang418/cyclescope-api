@@ -36,7 +36,7 @@ export async function getLatestCSVDate(): Promise<string> {
       throw new Error(`Failed to fetch file list: ${response.status} ${response.statusText}`);
     }
     
-    const data = await response.json();
+    const data = await response.json() as { contents: Array<{ type: string; name: string }> };
     
     // Find all date directories (YYYY-MM-DD format)
     const dateDirs = data.contents
