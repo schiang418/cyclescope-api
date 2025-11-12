@@ -178,8 +178,9 @@ export async function runGammaAnalysis(
   
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: GAMMA_ASSISTANT_ID,
-    // Note: response_format MUST be omitted when using Vision API (images)
-    // Setting response_format with images causes 'invalid_image_format' error
+    tool_choice: "none",                        // Disable tools to prevent initialization crashes
+    response_format: { type: "json_object" },   // Force JSON output
+    temperature: 0,                             // Ensure consistency
   });
   
   console.log('[Gamma] Run created successfully');
