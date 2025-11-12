@@ -192,7 +192,15 @@ export async function runDeltaAnalysis(
   
   while (runStatus.status !== 'completed') {
     if (runStatus.status === 'failed' || runStatus.status === 'cancelled') {
-      throw new Error(`Delta analysis failed: ${runStatus.status}`);
+      console.error('===============================================================================');
+      console.error('[Delta] ❌ RUN FAILED');
+      console.error('[Delta] Status:', runStatus.status);
+      console.error('[Delta] Last error:', runStatus.last_error);
+      console.error('[Delta] Run ID:', run.id);
+      console.error('[Delta] Thread ID:', thread.id);
+      console.error('[Delta] Assistant ID:', DELTA_ASSISTANT_ID);
+      console.error('===============================================================================');
+      throw new Error(`Delta analysis failed: ${runStatus.last_error?.message || runStatus.status}`);
     }
     
     await new Promise(resolve => setTimeout(resolve, 2000));
