@@ -136,12 +136,21 @@ Please provide:
   // Log the raw response for debugging
   console.log('[Fusion] Raw response (first 200 chars):', fullAnalysis.substring(0, 200));
   
-  // Try to extract JSON from markdown code blocks if present
+  // Try to extract JSON from various formats
   let jsonString = fullAnalysis;
-  const jsonMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonString = jsonMatch[1].trim();
+  
+  // 1. Try to extract from markdown code blocks
+  const markdownMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (markdownMatch) {
+    jsonString = markdownMatch[1].trim();
     console.log('[Fusion] Extracted JSON from markdown code block');
+  } else {
+    // 2. Try to find JSON object starting with { and ending with }
+    const jsonObjectMatch = fullAnalysis.match(/\{[\s\S]*\}/);
+    if (jsonObjectMatch) {
+      jsonString = jsonObjectMatch[0].trim();
+      console.log('[Fusion] Extracted JSON object from text');
+    }
   }
   
   // Parse JSON output (mode='engine' should return JSON)
