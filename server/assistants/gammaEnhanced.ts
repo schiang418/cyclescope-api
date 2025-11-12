@@ -316,12 +316,25 @@ export async function runGammaEnhancedAnalysis(
   
   let fullAnalysis = assistantMessage.content[0].text.value;
   
-  // Remove markdown code blocks if present (```json ... ```)
-  fullAnalysis = fullAnalysis.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
-  console.log('[Gamma Enhanced] Cleaned response (removed markdown if present)');
+  // Try to extract JSON from various formats
+  let jsonString = fullAnalysis;
+  
+  // 1. Try to extract from markdown code blocks
+  const markdownMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (markdownMatch) {
+    jsonString = markdownMatch[1].trim();
+    console.log('[Gamma Enhanced] Extracted JSON from markdown code block');
+  } else {
+    // 2. Try to find JSON object starting with { and ending with }
+    const jsonObjectMatch = fullAnalysis.match(/\{[\s\S]*\}/);
+    if (jsonObjectMatch) {
+      jsonString = jsonObjectMatch[0].trim();
+      console.log('[Gamma Enhanced] Extracted JSON object from text');
+    }
+  }
   
   // Parse JSON output (mode='engine' always returns JSON)
-  const gammaData = JSON.parse(fullAnalysis);
+  const gammaData = JSON.parse(jsonString);
   console.log('[Gamma Enhanced] Successfully parsed JSON output');
   
   // Extract ALL fields from JSON

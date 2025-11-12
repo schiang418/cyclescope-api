@@ -301,16 +301,27 @@ export async function runDeltaEnhancedAnalysis(
   
   let fullAnalysis = assistantMessage.content[0].text.value;
   
-  // Remove markdown code blocks if present (```json ... ```)
-  if (fullAnalysis.includes('```')) {
-    fullAnalysis = fullAnalysis.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-    console.log('[Delta Enhanced] Cleaned response (removed markdown if present)');
+  // Try to extract JSON from various formats
+  let jsonString = fullAnalysis;
+  
+  // 1. Try to extract from markdown code blocks
+  const markdownMatch = fullAnalysis.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (markdownMatch) {
+    jsonString = markdownMatch[1].trim();
+    console.log('[Delta Enhanced] Extracted JSON from markdown code block');
+  } else {
+    // 2. Try to find JSON object starting with { and ending with }
+    const jsonObjectMatch = fullAnalysis.match(/\{[\s\S]*\}/);
+    if (jsonObjectMatch) {
+      jsonString = jsonObjectMatch[0].trim();
+      console.log('[Delta Enhanced] Extracted JSON object from text');
+    }
   }
   
   // Parse JSON
   let deltaData: any;
   try {
-    deltaData = JSON.parse(fullAnalysis);
+    deltaData = JSON.parse(jsonString);
     console.log('[Delta Enhanced] Successfully parsed JSON output');
   } catch (error) {
     console.error('[Delta Enhanced] Failed to parse JSON:', error);
