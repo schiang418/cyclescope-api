@@ -231,11 +231,18 @@ export async function getPriorDeltaOutputs(days: number = 3, excludeDate?: strin
   try {
     // Get the last N business days with Delta data (excluding nulls and weekends)
     // We fetch more records than needed to account for weekends, then filter
+    console.log(`[Database] Fetching prior Delta outputs (days: ${days}, excludeDate: ${excludeDate || 'none'})`);
+    
     // Build WHERE clause
-    const whereConditions = [isNotNull(dailySnapshots.deltaAsofDate)];
+    let whereClause;
     if (excludeDate) {
-      whereConditions.push(lt(dailySnapshots.date, excludeDate));
+      whereClause = and(
+        isNotNull(dailySnapshots.deltaAsofDate),
+        lt(dailySnapshots.date, excludeDate)
+      );
       console.log(`[Database] Excluding current analysis date: ${excludeDate}`);
+    } else {
+      whereClause = isNotNull(dailySnapshots.deltaAsofDate);
     }
     
     const snapshots = await db
@@ -255,9 +262,11 @@ export async function getPriorDeltaOutputs(days: number = 3, excludeDate?: strin
         deltaLeadership: dailySnapshots.deltaLeadership,
       })
       .from(dailySnapshots)
-      .where(and(...whereConditions))
+      .where(whereClause)
       .orderBy(desc(dailySnapshots.date))
       .limit(days * 2); // Fetch extra to account for weekends
+    
+    console.log(`[Database] Query returned ${snapshots.length} snapshots`);
     
     // Filter out weekends (Saturday = 6, Sunday = 0)
     const businessDays = snapshots.filter(snapshot => {
