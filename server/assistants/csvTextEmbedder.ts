@@ -8,6 +8,26 @@
 const DOWNLOADER_BASE_URL = 'https://cyclescope-downloader-production.up.railway.app/download';
 
 /**
+ * Get CSV rows configuration from environment variable
+ * Defaults:
+ * - Enhanced mode: 20 rows (for compatibility with charts)
+ * - CSV-Only mode: 45 rows (to avoid rate limits)
+ */
+function getCSVRows(mode: 'enhanced' | 'csv_only'): number {
+  const envValue = process.env.CSV_ROWS;
+  
+  if (envValue) {
+    const parsed = parseInt(envValue, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  
+  // Default values based on mode
+  return mode === 'csv_only' ? 45 : 20;
+}
+
+/**
  * Trim CSV to first 2 rows (headers) + last N data rows
  */
 function trimCSVToText(csvContent: string, lastNRows: number = 20): string {
@@ -32,9 +52,13 @@ function trimCSVToText(csvContent: string, lastNRows: number = 20): string {
 export async function downloadAndFormatCSVsAsText(
   date: string,
   csvFilenames: string[],
-  lastNRows: number = 20
+  lastNRows?: number,
+  mode: 'enhanced' | 'csv_only' = 'enhanced'
 ): Promise<string> {
+  // Use provided value, or get from env, or use default
+  const rows = lastNRows ?? getCSVRows(mode);
   console.log(`[CSV Text Embedder] Downloading ${csvFilenames.length} CSV files for ${date}...`);
+  console.log(`[CSV Text Embedder] Using ${rows} rows per file (mode: ${mode})`);
   
   const csvTextBlocks: string[] = [];
   
@@ -55,7 +79,7 @@ export async function downloadAndFormatCSVsAsText(
       console.log(`[CSV Text Embedder] Downloaded ${filename} (${originalLines} lines)`);
       
       // 2. Trim to first 2 rows + last N rows
-      const trimmedCSV = trimCSVToText(csvContent, lastNRows);
+      const trimmedCSV = trimCSVToText(csvContent, rows);
       const trimmedLines = trimmedCSV.split('\n').filter(line => line.trim() !== '').length;
       console.log(`[CSV Text Embedder] Trimmed ${filename} from ${originalLines} to ${trimmedLines} lines`);
       

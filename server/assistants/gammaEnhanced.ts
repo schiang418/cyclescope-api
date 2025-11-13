@@ -135,7 +135,12 @@ export async function runGammaEnhancedAnalysis(
     const latestDate = await getLatestCSVDate();
     console.log(`[Gamma Enhanced] Using CSV data from: ${latestDate}`);
     
-    csvEmbeddedText = await downloadAndFormatCSVsAsText(latestDate, GAMMA_CSV_FILES, 20);
+    csvEmbeddedText = await downloadAndFormatCSVsAsText(
+      latestDate, 
+      GAMMA_CSV_FILES, 
+      undefined,  // Use CSV_ROWS env variable or default (20 for enhanced)
+      'enhanced'  // Mode: enhanced
+    );
     console.log(`[Gamma Enhanced] ✅ Successfully formatted CSV data as embedded text`);
   } catch (error) {
     console.error('[Gamma Enhanced] ⚠️ CSV formatting failed:', error);

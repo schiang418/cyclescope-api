@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { runGammaEnhancedAnalysis } from './gammaEnhanced.js';
+import { runGammaCsvOnlyAnalysis } from './gammaCsvOnly.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -88,11 +89,17 @@ export async function runGammaAnalysis(
   mode: 'engine' | 'panel' = 'engine',
   date?: string
 ): Promise<GammaAnalysisResult> {
-  // Check if Enhanced mode is enabled via environment variable
-  const useEnhanced = process.env.ENABLE_ENHANCED_ANALYSIS === 'true';
+  // Read environment variable for mode selection
+  const enhancedMode = process.env.ENABLE_ENHANCED_ANALYSIS || 'false';
   
-  if (useEnhanced) {
-    console.log('🚀 [Gamma] Enhanced mode ENABLED (charts + CSV data)');
+  console.log(`[Gamma] ENABLE_ENHANCED_ANALYSIS = ${enhancedMode}`);
+  
+  // Route to appropriate mode
+  if (enhancedMode === 'csv_only') {
+    console.log('📊 [Gamma] CSV-Only mode - 18 CSV files (first 2 + last 200 rows), NO charts');
+    return runGammaCsvOnlyAnalysis(mode, date);
+  } else if (enhancedMode === 'true') {
+    console.log('🚀 [Gamma] Enhanced mode - 18 charts + 18 CSV files (first 2 + last 20 rows)');
     return runGammaEnhancedAnalysis(mode, date);
   }
   

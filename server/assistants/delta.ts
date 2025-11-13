@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { runDeltaEnhancedAnalysis } from './deltaEnhanced.js';
+import { runDeltaCsvOnlyAnalysis } from './deltaCsvOnly.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -97,11 +98,17 @@ export async function runDeltaAnalysis(
   mode: 'engine' | 'panel' = 'engine',
   date?: string
 ): Promise<DeltaAnalysisResult> {
-  // Check if Enhanced mode is enabled via environment variable
-  const useEnhanced = process.env.ENABLE_ENHANCED_ANALYSIS === 'true';
+  // Read environment variable for mode selection
+  const enhancedMode = process.env.ENABLE_ENHANCED_ANALYSIS || 'false';
   
-  if (useEnhanced) {
-    console.log('🚀 [Delta] Enhanced mode ENABLED (charts + CSV data)');
+  console.log(`[Delta] ENABLE_ENHANCED_ANALYSIS = ${enhancedMode}`);
+  
+  // Route to appropriate mode
+  if (enhancedMode === 'csv_only') {
+    console.log('📊 [Delta] CSV-Only mode - 14 CSV files (first 2 + last 200 rows), NO charts');
+    return runDeltaCsvOnlyAnalysis(mode, date);
+  } else if (enhancedMode === 'true') {
+    console.log('🚀 [Delta] Enhanced mode - 14 charts + 14 CSV files (first 2 + last 20 rows)');
     return runDeltaEnhancedAnalysis(mode, date);
   }
   

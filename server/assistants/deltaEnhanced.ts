@@ -138,7 +138,12 @@ export async function runDeltaEnhancedAnalysis(
     const latestDate = await getLatestCSVDate();
     console.log(`[Delta Enhanced] Using CSV data from: ${latestDate}`);
     
-    csvEmbeddedText = await downloadAndFormatCSVsAsText(latestDate, DELTA_CSV_FILES, 20);
+    csvEmbeddedText = await downloadAndFormatCSVsAsText(
+      latestDate, 
+      DELTA_CSV_FILES, 
+      undefined,  // Use CSV_ROWS env variable or default (20 for enhanced)
+      'enhanced'  // Mode: enhanced
+    );
     console.log(`[Delta Enhanced] ✅ Successfully formatted CSV data as embedded text`);
   } catch (error) {
     console.error('[Delta Enhanced] ⚠️ CSV formatting failed:', error);
