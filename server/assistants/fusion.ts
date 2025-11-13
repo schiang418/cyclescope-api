@@ -70,9 +70,10 @@ export async function runFusionAnalysis(
   console.log(`[Fusion] Thread created: ${thread.id}`);
   
   // Pass the full JSON objects from Gamma and Delta
+  // Use the exact format the Assistant expects: "command: engine" or "engine"
   const modeInstruction = mode === 'engine' 
-    ? 'MODE: engine\n\nIMPORTANT: You MUST output ONLY valid JSON. No text before or after the JSON object. Start with { and end with }.'
-    : 'MODE: panel\n\nIMPORTANT: Output formatted text for display panel.';
+    ? 'command: engine'
+    : 'command: panel';
   
   const synthesisPrompt = `${modeInstruction}
 
