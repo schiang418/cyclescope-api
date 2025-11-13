@@ -11,7 +11,7 @@ const DOWNLOADER_BASE_URL = 'https://cyclescope-downloader-production.up.railway
  * Get CSV rows configuration from environment variable
  * Defaults:
  * - Enhanced mode: 20 rows (for compatibility with charts)
- * - CSV-Only mode: 45 rows (to avoid rate limits)
+ * - CSV-Only mode: 40 rows (to avoid rate limits)
  */
 function getCSVRows(mode: 'enhanced' | 'csv_only'): number {
   const envValue = process.env.CSV_ROWS;
@@ -24,7 +24,7 @@ function getCSVRows(mode: 'enhanced' | 'csv_only'): number {
   }
   
   // Default values based on mode
-  return mode === 'csv_only' ? 45 : 20;
+  return mode === 'csv_only' ? 40 : 20;
 }
 
 /**
