@@ -199,3 +199,108 @@ export async function getFieldChanges(fieldName: string, limit: number = 10) {
   return results;
 }
 
+
+
+/**
+ * Delta Temporal Context Types
+ */
+export interface DeltaPriorDay {
+  asof_date: string;
+  fragility_color: string;
+  fragility_label: string;
+  fragility_score: number;
+  template_code: string;
+  template_name: string;
+  posture_code: string;
+  posture_label: string;
+  dimensions: {
+    breadth: number;
+    liquidity: number;
+    volatility: number;
+    leadership: number;
+  };
+}
+
+/**
+ * Get prior Delta outputs for temporal context
+ * @param days Number of prior business days to fetch (default: 3)
+ * @param excludeDate Date to exclude (typically today's analysis date, format: YYYY-MM-DD)
+ * @returns Array of prior Delta states (most recent first)
+ */
+export async function getPriorDeltaOutputs(days: number = 3, excludeDate?: string): Promise<DeltaPriorDay[]> {
+  try {
+    // Get the last N business days with Delta data (excluding nulls and weekends)
+    // We fetch more records than needed to account for weekends, then filter
+    // Build WHERE clause
+    const whereConditions = [sql`${dailySnapshots.deltaFragilityScore} IS NOT NULL`];
+    if (excludeDate) {
+      whereConditions.push(sql`${dailySnapshots.date} < ${excludeDate}`);
+      console.log(`[Database] Excluding current analysis date: ${excludeDate}`);
+    }
+    
+    const snapshots = await db
+      .select({
+        date: dailySnapshots.date,
+        deltaAsofDate: dailySnapshots.deltaAsofDate,
+        deltaFragilityColor: dailySnapshots.deltaFragilityColor,
+        deltaFragilityLabel: dailySnapshots.deltaFragilityLabel,
+        deltaFragilityScore: dailySnapshots.deltaFragilityScore,
+        deltaTemplateCode: dailySnapshots.deltaTemplateCode,
+        deltaTemplateName: dailySnapshots.deltaTemplateName,
+        deltaPostureCode: dailySnapshots.deltaPostureCode,
+        deltaPostureLabel: dailySnapshots.deltaPostureLabel,
+        deltaBreadth: dailySnapshots.deltaBreadth,
+        deltaLiquidity: dailySnapshots.deltaLiquidity,
+        deltaVolatility: dailySnapshots.deltaVolatility,
+        deltaLeadership: dailySnapshots.deltaLeadership,
+      })
+      .from(dailySnapshots)
+      .where(sql`${whereConditions.join(' AND ')}`)
+      .orderBy(desc(dailySnapshots.date))
+      .limit(days * 2); // Fetch extra to account for weekends
+    
+    // Filter out weekends (Saturday = 6, Sunday = 0)
+    const businessDays = snapshots.filter(snapshot => {
+      const date = new Date(snapshot.date);
+      const dayOfWeek = date.getDay();
+      return dayOfWeek !== 0 && dayOfWeek !== 6; // Exclude Sunday (0) and Saturday (6)
+    });
+    
+    // Take only the requested number of business days
+    const limitedDays = businessDays.slice(0, days);
+    
+    console.log(`[Database] Fetched ${limitedDays.length} prior business days (requested: ${days})`);
+    if (limitedDays.length > 0) {
+      console.log(`[Database] Date range: ${limitedDays[limitedDays.length - 1].date} to ${limitedDays[0].date}`);
+    }
+    
+    // Transform to ChatGPT format
+    return limitedDays.map(transformToDeltaPriorDay);
+  } catch (error) {
+    console.error('[Database] Failed to fetch prior Delta outputs:', error);
+    return [];
+  }
+}
+
+/**
+ * Transform database record to Delta prior day format
+ */
+function transformToDeltaPriorDay(snapshot: any): DeltaPriorDay {
+  return {
+    asof_date: snapshot.deltaAsofDate || '',
+    fragility_color: snapshot.deltaFragilityColor || 'YELLOW',
+    fragility_label: snapshot.deltaFragilityLabel || 'Mixed Signals',
+    fragility_score: snapshot.deltaFragilityScore ?? 0,
+    template_code: snapshot.deltaTemplateCode || '',
+    template_name: snapshot.deltaTemplateName || '',
+    posture_code: snapshot.deltaPostureCode || '',
+    posture_label: snapshot.deltaPostureLabel || '',
+    dimensions: {
+      breadth: snapshot.deltaBreadth ?? 1,
+      liquidity: snapshot.deltaLiquidity ?? 1,
+      volatility: snapshot.deltaVolatility ?? 1,
+      leadership: snapshot.deltaLeadership ?? 1,
+    },
+  };
+}
+
