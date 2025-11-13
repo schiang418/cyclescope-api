@@ -103,12 +103,18 @@ Please provide:
   // Run assistant
   console.log(`[Fusion] Starting assistant run...`);
   console.log(`[Fusion] Assistant ID: ${FUSION_ASSISTANT_ID}`);
+  console.log(`[Fusion] Configuration:`);
+  console.log(`  - tool_choice: none`);
+  console.log(`  - response_format: json_object`);
+  console.log(`  - temperature: 0`);
+  
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: FUSION_ASSISTANT_ID,
+    tool_choice: "none",
     response_format: { type: 'json_object' },
+    temperature: 0,
   });
   console.log(`[Fusion] Run created: ${run.id}`);
-  console.log(`[Fusion] Response format: json_object`);
   
   // Wait for completion
   let runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
