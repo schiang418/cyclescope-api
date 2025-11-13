@@ -77,10 +77,24 @@ export const appRouter = t.router({
           
           // Add delay between Gamma and Delta in CSV-Only mode to avoid TPM rate limit
           const enhancedMode = process.env.ENABLE_ENHANCED_ANALYSIS || 'false';
+          console.log(`[API] Enhanced mode setting: ${enhancedMode}`);
+          
           if (enhancedMode === 'csv_only') {
-            console.log('[API] ⏳ CSV-Only mode: Waiting 60 seconds before Delta to avoid OpenAI TPM rate limit...');
-            await new Promise(resolve => setTimeout(resolve, 60000)); // 60 seconds
-            console.log('[API] ✅ Delay complete, proceeding with Delta analysis');
+            const delaySeconds = 60;
+            console.log(`[API] ⏳ CSV-Only mode: Waiting ${delaySeconds} seconds before Delta to avoid OpenAI TPM rate limit...`);
+            console.log(`[API] Current time: ${new Date().toISOString()}`);
+            
+            // Log every 10 seconds during delay
+            for (let i = 0; i < delaySeconds; i += 10) {
+              await new Promise(resolve => setTimeout(resolve, 10000)); // 10 seconds
+              const remaining = delaySeconds - i - 10;
+              if (remaining > 0) {
+                console.log(`[API] ⏳ Still waiting... ${remaining} seconds remaining`);
+              }
+            }
+            
+            console.log(`[API] ✅ Delay complete at ${new Date().toISOString()}`);
+            console.log('[API] ✅ Proceeding with Delta analysis');
           }
           
           // Step 2: Run Delta analysis (14 charts)
