@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import { runDeltaEnhancedAnalysis } from './deltaEnhanced.js';
 import { runDeltaCsvOnlyAnalysis } from './deltaCsvOnly.js';
-import { getPriorDeltaOutputs } from '../db.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -117,22 +116,6 @@ export async function runDeltaAnalysis(
   const analysisDate = date || getMarketDate();
   console.log(`[Delta] STANDARD mode - Starting analysis for ${analysisDate} (market date) with 14 charts...`);
   
-  // Check if temporal context is enabled
-  const useTemporalData = process.env.TEMPORAL_DATA !== 'false'; // Default: true
-  console.log(`[Delta] Temporal context: ${useTemporalData ? 'ENABLED' : 'DISABLED'}`);
-  
-  // Fetch prior Delta outputs if temporal context is enabled
-  let priorDaysContext = '';
-  if (useTemporalData) {
-    const priorDays = await getPriorDeltaOutputs(3, analysisDate);
-    if (priorDays.length > 0) {
-      console.log(`[Delta] Fetched ${priorDays.length} prior days for temporal context`);
-      priorDaysContext = `\n\n**PRIOR DAYS CONTEXT (for fragility trend detection):**\n\n${JSON.stringify({ past_delta_states: priorDays }, null, 2)}\n\n**TEMPORAL PROCESSING INSTRUCTIONS:**\n\n1. **Fragility Trajectory Analysis**\n   - **Building**: Score increasing over 2+ days, or dimensions worsening\n   - **Stable**: Score ±1 point, dimensions mostly unchanged\n   - **Releasing**: Score decreasing, dimensions improving\n\n2. **Dimension Persistence Tracking**\n   - If any dimension = 2 (orange) for 2+ consecutive days → structural concern\n   - If Volatility spikes but other dimensions stable → likely noise\n   - If 2+ dimensions worsen together → confirm escalation\n\n3. **Structural vs. Noise Filtering**\n   - **Structural**: Liquidity worsens, or 2+ dimensions worsen together\n   - **Noise**: Single dimension spikes while others stable\n   - **Confirmation**: Wait for 2nd day before escalating on isolated moves\n\n4. **Template Stability**\n   - Don't change template on single-day moves\n   - Only change if 2+ dimensions confirm new structural pattern\n   - Reference prior template in rationale when changing\n\n5. **Posture Continuity**\n   - Don't oscillate between Caution/Defensive on noise\n   - Escalate posture only if fragility building for 2+ days\n   - De-escalate only if fragility releasing for 2+ days\n\n6. **Contextual Explanation**\n   - Reference prior days when explaining today's assessment\n   - Examples:\n     * "Fragility remains elevated for the 3rd consecutive day..."\n     * "Liquidity stress has eased from yesterday's 2 to today's 1..."\n     * "Unlike yesterday's isolated spike, today's move is structural..."\n\n**ESCALATION THRESHOLDS:**\n\nEscalate fragility (YELLOW → ORANGE) only if:\n- Score increases for 2+ consecutive days, OR\n- 2+ dimensions worsen together, OR\n- Liquidity dimension worsens (highest priority signal)\n\nDe-escalate fragility (ORANGE → YELLOW) only if:\n- Score decreases for 2+ consecutive days, AND\n- No dimension remains at 2 (orange), AND\n- Liquidity dimension improves or stable at 0-1\n\n**PRIORITY HIERARCHY:**\n\n1. **Liquidity** (most important - credit stress is structural)\n2. **Leadership** (second - shows rotation quality)\n3. **Breadth** (third - confirms participation)\n4. **Volatility** (fourth - often noise, confirm with others)\n`;
-    } else {
-      console.log('[Delta] No prior days found, proceeding without temporal context');
-    }
-  }
-  
   const client = getOpenAI();
   
   // Create thread
@@ -157,7 +140,7 @@ export async function runDeltaAnalysis(
   const batch1Content: any[] = [
     {
       type: "text",
-      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.${priorDaysContext}\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nBatch 1 of 2: First 7 charts`
+      text: `${mode}\n\nIMPORTANT: Use this exact date in your output:\nAnalysis Date: ${analysisDate}\n\nFor JSON output, use this date in the "asof_date" field.\n\nCRITICAL: You MUST:\n1. READ the actual numeric indicator values from each chart image\n2. Include SPECIFIC VALUES in your analysis (e.g., "SPXA50R = 45%", "VIX = 18", "HYG/LQD = 1.02")\n3. DO NOT use generic descriptions - quote the actual numbers you see in the charts\n\nPlease analyze these 14 market fragility charts and assess stress levels:\n\n${chartDescriptions}\n\nProvide stress assessment (0=green, 1=yellow, 2=orange) for each dimension: BREADTH, LIQUIDITY_CREDIT, VOLATILITY, LEADERSHIP.\n\nBatch 1 of 2: First 7 charts`
     }
   ];
   

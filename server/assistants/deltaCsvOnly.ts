@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { getLatestCSVDate } from './csvUploader.js';
 import { downloadAndFormatCSVsAsText } from './csvTextEmbedder.js';
+import { getPriorDeltaOutputs } from '../db.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
@@ -100,9 +101,25 @@ export async function runDeltaCsvOnlyAnalysis(
   date?: string
 ): Promise<DeltaAnalysisResult> {
   const analysisDate = date || getMarketDate();
-  console.log('📊📊📊 DELTA CSV-ONLY MODE: 14 CSV Files (first 2 + last 200 rows), NO Charts 📊📊📊');
+  console.log('📊📊📊 DELTA CSV-ONLY MODE: 14 CSV Files (first 2 + last 40 rows), NO Charts 📊📊📊');
   console.log(`[Delta CSV-Only] Using Assistant: ${DELTA_CSV_ASSISTANT_ID}`);
   console.log(`[Delta CSV-Only] Starting analysis for ${analysisDate}...`);
+  
+  // Check if temporal context is enabled
+  const useTemporalData = process.env.TEMPORAL_DATA !== 'false'; // Default: true
+  console.log(`[Delta CSV-Only] Temporal context: ${useTemporalData ? 'ENABLED' : 'DISABLED'}`);
+  
+  // Fetch prior Delta outputs if temporal context is enabled
+  let priorDaysContext = '';
+  if (useTemporalData) {
+    const priorDays = await getPriorDeltaOutputs(3, analysisDate);
+    if (priorDays.length > 0) {
+      console.log(`[Delta CSV-Only] Fetched ${priorDays.length} prior days for temporal context`);
+      priorDaysContext = `\n\n**PRIOR DAYS CONTEXT (for fragility trend detection):**\n\n${JSON.stringify({ past_delta_states: priorDays }, null, 2)}\n\n**TEMPORAL PROCESSING INSTRUCTIONS:**\n\n1. **Fragility Trajectory Analysis**\n   - **Building**: Score increasing over 2+ days, or dimensions worsening\n   - **Stable**: Score ±1 point, dimensions mostly unchanged\n   - **Releasing**: Score decreasing, dimensions improving\n\n2. **Dimension Persistence Tracking**\n   - If any dimension = 2 (orange) for 2+ consecutive days → structural concern\n   - If Volatility spikes but other dimensions stable → likely noise\n   - If 2+ dimensions worsen together → confirm escalation\n\n3. **Structural vs. Noise Filtering**\n   - **Structural**: Liquidity worsens, or 2+ dimensions worsen together\n   - **Noise**: Single dimension spikes while others stable\n   - **Confirmation**: Wait for 2nd day before escalating on isolated moves\n\n4. **Template Stability**\n   - Don't change template on single-day moves\n   - Only change if 2+ dimensions confirm new structural pattern\n   - Reference prior template in rationale when changing\n\n5. **Posture Continuity**\n   - Don't oscillate between Caution/Defensive on noise\n   - Escalate posture only if fragility building for 2+ days\n   - De-escalate only if fragility releasing for 2+ days\n\n6. **Contextual Explanation**\n   - Reference prior days when explaining today's assessment\n   - Examples:\n     * \"Fragility remains elevated for the 3rd consecutive day...\"\n     * \"Liquidity stress has eased from yesterday's 2 to today's 1...\"\n     * \"Unlike yesterday's isolated spike, today's move is structural...\"\n\n**ESCALATION THRESHOLDS:**\n\nEscalate fragility (YELLOW → ORANGE) only if:\n- Score increases for 2+ consecutive days, OR\n- 2+ dimensions worsen together, OR\n- Liquidity dimension worsens (highest priority signal)\n\nDe-escalate fragility (ORANGE → YELLOW) only if:\n- Score decreases for 2+ consecutive days, AND\n- No dimension remains at 2 (orange), AND\n- Liquidity dimension improves or stable at 0-1\n\n**PRIORITY HIERARCHY:**\n\n1. **Liquidity** (most important - credit stress is structural)\n2. **Leadership** (second - shows rotation quality)\n3. **Breadth** (third - confirms participation)\n4. **Volatility** (fourth - often noise, confirm with others)\n`;
+    } else {
+      console.log('[Delta CSV-Only] No prior days found, proceeding without temporal context');
+    }
+  }
   
   const client = getOpenAI();
   
@@ -130,6 +147,7 @@ export async function runDeltaCsvOnlyAnalysis(
     mode,
     '',
     `Analysis Date: ${analysisDate}`,
+    priorDaysContext,
     '',
     'IMPORTANT: Analyze ONLY the 14 CSV datasets provided below.',
     'No chart images are available.',
