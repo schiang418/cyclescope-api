@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { dailySnapshots, statusChanges, InsertDailySnapshot, InsertStatusChange } from '../drizzle/schema.js';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql, and, lt, isNotNull } from 'drizzle-orm';
 
 // Create PostgreSQL connection
 const connectionString = process.env.DATABASE_URL!;
@@ -232,9 +232,9 @@ export async function getPriorDeltaOutputs(days: number = 3, excludeDate?: strin
     // Get the last N business days with Delta data (excluding nulls and weekends)
     // We fetch more records than needed to account for weekends, then filter
     // Build WHERE clause
-    const whereConditions = [sql`${dailySnapshots.deltaFragilityScore} IS NOT NULL`];
+    const whereConditions = [isNotNull(dailySnapshots.deltaAsofDate)];
     if (excludeDate) {
-      whereConditions.push(sql`${dailySnapshots.date} < ${excludeDate}`);
+      whereConditions.push(lt(dailySnapshots.date, excludeDate));
       console.log(`[Database] Excluding current analysis date: ${excludeDate}`);
     }
     
@@ -255,7 +255,7 @@ export async function getPriorDeltaOutputs(days: number = 3, excludeDate?: strin
         deltaLeadership: dailySnapshots.deltaLeadership,
       })
       .from(dailySnapshots)
-      .where(sql`${whereConditions.join(' AND ')}`)
+      .where(and(...whereConditions))
       .orderBy(desc(dailySnapshots.date))
       .limit(days * 2); // Fetch extra to account for weekends
     
