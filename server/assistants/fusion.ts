@@ -101,8 +101,10 @@ Please provide:
   console.log(`[Fusion] Assistant ID: ${FUSION_ASSISTANT_ID}`);
   const run = await client.beta.threads.runs.create(thread.id, {
     assistant_id: FUSION_ASSISTANT_ID,
+    response_format: { type: 'json_object' },
   });
   console.log(`[Fusion] Run created: ${run.id}`);
+  console.log(`[Fusion] Response format: json_object`);
   
   // Wait for completion
   let runStatus = await client.beta.threads.runs.retrieve(thread.id, run.id);
