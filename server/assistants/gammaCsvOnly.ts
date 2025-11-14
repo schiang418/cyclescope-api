@@ -1,3 +1,4 @@
+// Version: Fixed Unicode characters - Build 2025-11-14
 import OpenAI from 'openai';
 import { getLatestCSVDate } from './csvUploader.js';
 import { downloadAndFormatCSVsAsText } from './csvTextEmbedder.js';
