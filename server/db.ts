@@ -23,6 +23,14 @@ function getMarketDate(): string {
 export async function saveDailySnapshot(data: Omit<InsertDailySnapshot, 'date'> & { analysisDate?: string }) {
   const { analysisDate, ...snapshotData } = data;
   
+  // DEBUG: Log what data we're receiving
+  console.log('[DB] DEBUG - saveDailySnapshot received data with keys:', Object.keys(snapshotData));
+  console.log('[DB] DEBUG - Gamma fields:', {
+    gammaAsofWeek: snapshotData.gammaAsofWeek,
+    gammaCycleStagePrimary: snapshotData.gammaCycleStagePrimary,
+    gammaCycleStageTransition: snapshotData.gammaCycleStageTransition
+  });
+  
   // Use provided date or current market date (ET)
   const dateStr = analysisDate || getMarketDate();
   
