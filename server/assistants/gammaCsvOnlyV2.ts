@@ -111,53 +111,7 @@ export async function runGammaCsvOnlyAnalysis(
     const priorWeeks = await getPriorGammaOutputs(2, analysisDate, useWeeklyMode);
     if (priorWeeks.length > 0) {
       console.log(`[Gamma CSV-Only] Fetched ${priorWeeks.length} prior weeks for temporal context`);
-      const contextHeader = `
-
-**PRIOR WEEKS CONTEXT (for cycle stage smoothing):**
-
-${JSON.stringify({ past_gamma_states: priorWeeks }, null, 2)}
-
-**TEMPORAL PROCESSING INSTRUCTIONS:**
-
-`;
-      const instruction1 = `1. **Always compute today's state first**
-   - Use the current 18 indicators (CSV) to derive a raw current assessment
-   - Candidate cycle_stage.primary and cycle_stage.transition
-   - Candidate macro_posture, tone, and phase_confidence
-   - Candidate domain biases/strengths for all 6 domains
-   - Do this without forcing it to match history (unsmoothed view)
-
-`;
-      const instruction2 = `2. **Then compare with past_gamma_states and apply smoothing**
-   - Use the previous 1-2 weeks to avoid jumpy week-to-week changes
-   - Slow domains dominate stage changes: Only change primary cycle stage if there is clear, consistent confirmation from Macro Trend and Credit/Liquidity, supported (ideally) by Breadth or Leadership
-   - Minimum evidence for stage change: Do not change cycle_stage.primary if only 1 fast domain (e.g., Volatility or Sentiment) has shifted. Require at least:
-     * A clear shift in Macro Trend or Credit/Liquidity, AND
-     * At least one additional domain (Breadth or Leadership) moving in the same direction compared to most recent past_gamma_states
-   - No big jumps in a single week: Do not jump directly from Early to Late or Mid to Contraction/Bottoming in one step. Move at most one stage step per week (e.g., Mid-Cycle to Late-Cycle to Topping), unless evidence from Macro + Credit is extremely decisive
-   - If signals are mixed: When current indicators suggest different stage but past_gamma_states show stability and domains are conflicting, keep prior primary stage and express change through:
-      * The transition label (e.g., Stable to Early Topping Watch)
-     * The tone (Firming risk to Softening under the surface)
-     * Slight adjustments to domain biases and phase_confidence, rather than hard stage flip
-
-`;
-      const instruction3 = `3. **Phase confidence evolves gradually**
-   - Use phase_confidence to reflect how strongly current data confirms existing stage
-   - Do not change phase_confidence by more than about 0.15 in either direction in a single week unless Macro + Credit both move decisively
-   - If raw reading and past states are aligned, slowly increase confidence; if they conflict, reduce it modestly instead of flipping stage
-
-`;
-      const instruction4 = `4. **Domains: direction over noise**
-   - When comparing to past_gamma_states, prioritize direction and persistence:
-     * If Macro and Credit have been consistently weakening for 2 weeks and weaken again this week, it is appropriate to move cycle stage more defensively
-     * If only Breadth or Volatility wobbles while Macro and Credit stay firm, treat it as tactical noise, not a cycle change
-
-`;
-      const instruction5 = `5. **If past_gamma_states is not provided**
-   - Assume that prior stage was same as your current raw stage, unless current indicators clearly justify a downgrade (e.g., broad deterioration in Macro and Credit) or clear upgrade
-   - Never complain about missing history; just apply above rules based on what you can see
-`;
-      priorWeeksContext = contextHeader + instruction1 + instruction2 + instruction3 + instruction4 + instruction5;\n    } else {\n      console.log('[Gamma CSV-Only] No prior weeks found, proceeding without temporal context');\n    }\n  }\n  \n  const client = getOpenAI();\n  \n  // Step 1: Download and format 18 CSV files (first 2 rows + last 200 rows)
+      priorWeeksContext = `\n\n**PRIOR WEEKS CONTEXT:**\n\n${JSON.stringify({ past_gamma_states: priorWeeks }, null, 2)}\n`;\n    } else {\n      console.log('[Gamma CSV-Only] No prior weeks found, proceeding without temporal context');\n    }\n  }\n  \n  const client = getOpenAI();\n  \n  // Step 1: Download and format 18 CSV files (first 2 rows + last 200 rows)
   console.log('[Gamma CSV-Only] Downloading 18 CSV files (first 2 + last 200 rows each)...');
   const latestDate = await getLatestCSVDate();
   console.log(`[Gamma CSV-Only] Using CSV data from: ${latestDate}`);
