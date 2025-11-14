@@ -55,6 +55,14 @@ export async function saveDailySnapshot(data: Omit<InsertDailySnapshot, 'date'> 
     })
     .returning();
   
+  // DEBUG: Log what was actually saved to database
+  console.log('[DB] DEBUG - Database returned snapshot ID:', result.id);
+  console.log('[DB] DEBUG - Database returned Gamma fields:', {
+    gammaAsofWeek: result.gammaAsofWeek,
+    gammaCycleStagePrimary: result.gammaCycleStagePrimary,
+    gammaCycleStageTransition: result.gammaCycleStageTransition
+  });
+  
   return result;
 }
 
