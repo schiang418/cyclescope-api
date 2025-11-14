@@ -23,17 +23,136 @@ The **Temporal Context** feature enhances Gamma cycle analysis by providing the 
 ## Implementation Scope
 
 **✅ Implemented in:**
-- Gamma CSV-Only analysis (`server/assistants/gammaCsvOnlyV2.ts`)
+- **Gamma CSV-Only** analysis (`server/assistants/gammaCsvOnlyV2.ts`)
+- **Delta CSV-Only** analysis (`server/assistants/deltaCsvOnly.ts`) - separate implementation with different logic
 
 **❌ Not implemented in:**
 - Gamma Enhanced analysis
 - Gamma Standard analysis
-- Delta analysis (already has its own temporal context implementation)
+- Delta Enhanced analysis
+- Delta Standard analysis
 - Fusion analysis (inherits context from Gamma and Delta)
 
 ---
 
-## How It Works
+## Delta Temporal Context (Separate Implementation)
+
+**Delta analysis has its own temporal context implementation** with different goals and logic compared to Gamma.
+
+### Key Differences from Gamma
+
+| Aspect | Gamma Temporal Context | Delta Temporal Context |
+|--------|------------------------|------------------------|
+| **Purpose** | Smooth cycle stage transitions | Detect fragility trends and filter noise |
+| **Time Window** | Last 2 weeks | Last 3 days |
+| **Data Structure** | Cycle stage, macro posture, summary | Fragility score, dimensions, template, posture |
+| **Instructions** | Minimal (in Assistant prompt) | Extensive (passed with data) |
+| **Mode Options** | Sequential or Weekly | Sequential only |
+| **Environment Variable** | `GAMMA_WEEKLY_TEMPORAL` | `TEMPORAL_DATA` |
+
+### Delta Implementation Details
+
+**Configuration:**
+```bash
+# Default: enabled
+TEMPORAL_DATA=true   # Enable temporal context
+TEMPORAL_DATA=false  # Disable temporal context
+```
+
+**Data Fetched (Last 3 Days):**
+- `asof_date`: Analysis date
+- `fragility_color`: ORANGE, YELLOW, or GREEN
+- `fragility_score`: Numeric score (0-10)
+- `template_code` & `template_name`: Market pattern template
+- `posture_code` & `posture_label`: Risk posture (Caution, Defensive, etc.)
+- **Four Dimensions:**
+  - `breadth`: 0 (green), 1 (yellow), or 2 (orange)
+  - `liquidity`: 0 (green), 1 (yellow), or 2 (orange)
+  - `volatility`: 0 (green), 1 (yellow), or 2 (orange)
+  - `leadership`: 0 (green), 1 (yellow), or 2 (orange)
+
+**Temporal Processing Instructions (Passed to AI):**
+
+Delta includes **extensive instructions** with the temporal data to guide the AI:
+
+1. **Fragility Trajectory Analysis**
+   - Building: Score increasing over 2+ days
+   - Stable: Score ±1 point
+   - Releasing: Score decreasing
+
+2. **Dimension Persistence Tracking**
+   - Flag dimensions at 2 (orange) for 2+ consecutive days as structural concerns
+   - Distinguish between isolated spikes (noise) and multi-dimension deterioration
+
+3. **Structural vs. Noise Filtering**
+   - Structural: Liquidity worsens OR 2+ dimensions worsen together
+   - Noise: Single dimension spikes while others stable
+   - Confirmation: Wait for 2nd day before escalating on isolated moves
+
+4. **Template Stability**
+   - Don't change template on single-day moves
+   - Only change if 2+ dimensions confirm new structural pattern
+
+5. **Posture Continuity**
+   - Don't oscillate between Caution/Defensive on noise
+   - Escalate/de-escalate only after 2+ days of consistent signals
+
+6. **Priority Hierarchy**
+   - **Liquidity** (most important - credit stress is structural)
+   - **Leadership** (second - shows rotation quality)
+   - **Breadth** (third - confirms participation)
+   - **Volatility** (fourth - often noise, confirm with others)
+
+**Example Delta Temporal Context:**
+```json
+{
+  "past_delta_states": [
+    {
+      "asof_date": "2025-11-13",
+      "fragility_color": "ORANGE",
+      "fragility_score": 6,
+      "template_code": "A",
+      "template_name": "Hollow Highs",
+      "posture_code": "C",
+      "posture_label": "Caution",
+      "dimensions": {
+        "breadth": 1,
+        "liquidity": 2,
+        "volatility": 1,
+        "leadership": 2
+      }
+    },
+    {
+      "asof_date": "2025-11-12",
+      "fragility_color": "YELLOW",
+      "fragility_score": 4,
+      "dimensions": {
+        "breadth": 1,
+        "liquidity": 1,
+        "volatility": 1,
+        "leadership": 1
+      }
+    }
+  ]
+}
+```
+
+### Why Delta Needs Different Logic
+
+**Gamma** tracks **slow-moving macro cycles** (weeks to months):
+- Cycle stages change gradually
+- Focus on smoothing transitions
+- Minimal instructions needed (logic in Assistant prompt)
+
+**Delta** tracks **fast-moving market fragility** (days to weeks):
+- Fragility can spike quickly (noise)
+- Need to distinguish structural trends from temporary volatility
+- Requires detailed rules for escalation/de-escalation
+- More complex multi-dimensional analysis
+
+---
+
+## How It Works (Gamma Focus)
 
 ### Data Flow
 
@@ -91,10 +210,12 @@ export async function getPriorGammaOutputs(
 
 ### Environment Variables
 
+**For Gamma:**
+
 **`GAMMA_WEEKLY_TEMPORAL`** (optional)
 - **Type:** Boolean (`true` or `false`)
 - **Default:** `false`
-- **Description:** Controls temporal context mode
+- **Description:** Controls Gamma temporal context mode
   - `false`: Sequential mode (last 2 records regardless of date)
   - `true`: Weekly mode (specific Monday dates only)
 
@@ -102,6 +223,21 @@ export async function getPriorGammaOutputs(
 ```bash
 # In Railway or .env file
 GAMMA_WEEKLY_TEMPORAL=true
+```
+
+**For Delta:**
+
+**`TEMPORAL_DATA`** (optional)
+- **Type:** Boolean (`true` or `false`)
+- **Default:** `true`
+- **Description:** Enable/disable Delta temporal context
+  - `true`: Fetch last 3 days of Delta data
+  - `false`: Run analysis without historical context
+
+**Example:**
+```bash
+# In Railway or .env file
+TEMPORAL_DATA=false  # Disable Delta temporal context
 ```
 
 ### Code Configuration
