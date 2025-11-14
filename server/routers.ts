@@ -107,7 +107,6 @@ export const appRouter = t.router({
         
         // Step 4: Save to database
         console.log('[API] Saving results to database...');
-              });
         const snapshot = await saveDailySnapshot({
           analysisDate, // Pass as string, saveDailySnapshot will handle conversion
           
