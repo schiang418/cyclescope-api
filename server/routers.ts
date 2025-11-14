@@ -107,19 +107,7 @@ export const appRouter = t.router({
         
         // Step 4: Save to database
         console.log('[API] Saving results to database...');
-        console.log('[API] DEBUG - gammaResult fields:', {
-          asofWeek: gammaResult.asofWeek,
-          cycleStagePrimary: gammaResult.cycleStagePrimary,
-          cycleStageTransition: gammaResult.cycleStageTransition
-        });
-        console.log('[API] DEBUG - deltaResult fields:', {
-          asofDate: deltaResult.asofDate,
-          fragilityColor: deltaResult.fragilityColor
-        });
-        console.log('[API] DEBUG - fusionResult fields:', {
-          asofDate: fusionResult.asofDate,
-          cycleStage: fusionResult.cycleStage
-        });
+              });
         const snapshot = await saveDailySnapshot({
           analysisDate, // Pass as string, saveDailySnapshot will handle conversion
           

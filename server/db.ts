@@ -23,14 +23,6 @@ function getMarketDate(): string {
 export async function saveDailySnapshot(data: Omit<InsertDailySnapshot, 'date'> & { analysisDate?: string }) {
   const { analysisDate, ...snapshotData } = data;
   
-  // DEBUG: Log what data we're receiving
-  console.log('[DB] DEBUG - saveDailySnapshot received data with keys:', Object.keys(snapshotData));
-  console.log('[DB] DEBUG - Gamma fields:', {
-    gammaAsofWeek: snapshotData.gammaAsofWeek,
-    gammaCycleStagePrimary: snapshotData.gammaCycleStagePrimary,
-    gammaCycleStageTransition: snapshotData.gammaCycleStageTransition
-  });
-  
   // Use provided date or current market date (ET)
   const dateStr = analysisDate || getMarketDate();
   
@@ -55,14 +47,6 @@ export async function saveDailySnapshot(data: Omit<InsertDailySnapshot, 'date'> 
     })
     .returning();
   
-  // DEBUG: Log what was actually saved to database
-  console.log('[DB] DEBUG - Database returned snapshot ID:', result.id);
-  console.log('[DB] DEBUG - Database returned Gamma fields:', {
-    gammaAsofWeek: result.gammaAsofWeek,
-    gammaCycleStagePrimary: result.gammaCycleStagePrimary,
-    gammaCycleStageTransition: result.gammaCycleStageTransition
-  });
-  
   return result;
 }
 
@@ -75,16 +59,6 @@ export async function getLatestSnapshot() {
     .from(dailySnapshots)
     .orderBy(desc(dailySnapshots.createdAt))
     .limit(1);
-  
-  // DEBUG: Log what we're returning
-  console.log('[DB] DEBUG - getLatestSnapshot returning:', {
-    id: result?.id,
-    date: result?.date,
-    gammaAsofWeek: result?.gammaAsofWeek,
-    gammaCycleStagePrimary: result?.gammaCycleStagePrimary,
-    createdAt: result?.createdAt,
-    updatedAt: result?.updatedAt
-  });
   
   return result;
 }
