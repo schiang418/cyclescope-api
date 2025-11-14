@@ -111,7 +111,15 @@ export async function runGammaCsvOnlyAnalysis(
     const priorWeeks = await getPriorGammaOutputs(2, analysisDate, useWeeklyMode);
     if (priorWeeks.length > 0) {
       console.log(`[Gamma CSV-Only] Fetched ${priorWeeks.length} prior weeks for temporal context`);
-      priorWeeksContext = `\n\n**PRIOR WEEKS CONTEXT:**\n\n${JSON.stringify({ past_gamma_states: priorWeeks }, null, 2)}\n`;\n    } else {\n      console.log('[Gamma CSV-Only] No prior weeks found, proceeding without temporal context');\n    }\n  }\n  \n  const client = getOpenAI();\n  \n  // Step 1: Download and format 18 CSV files (first 2 rows + last 200 rows)
+      priorWeeksContext = `\n\n**PRIOR WEEKS CONTEXT:**\n\n${JSON.stringify({ past_gamma_states: priorWeeks }, null, 2)}\n`;
+    } else {
+      console.log('[Gamma CSV-Only] No prior weeks found, proceeding without temporal context');
+    }
+  }
+  
+  const client = getOpenAI();
+  
+  // Step 1: Download and format 18 CSV files (first 2 rows + last 200 rows)
   console.log('[Gamma CSV-Only] Downloading 18 CSV files (first 2 + last 200 rows each)...');
   const latestDate = await getLatestCSVDate();
   console.log(`[Gamma CSV-Only] Using CSV data from: ${latestDate}`);
