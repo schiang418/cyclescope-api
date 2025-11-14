@@ -75,6 +75,17 @@ export async function getLatestSnapshot() {
     .from(dailySnapshots)
     .orderBy(desc(dailySnapshots.createdAt))
     .limit(1);
+  
+  // DEBUG: Log what we're returning
+  console.log('[DB] DEBUG - getLatestSnapshot returning:', {
+    id: result?.id,
+    date: result?.date,
+    gammaAsofWeek: result?.gammaAsofWeek,
+    gammaCycleStagePrimary: result?.gammaCycleStagePrimary,
+    createdAt: result?.createdAt,
+    updatedAt: result?.updatedAt
+  });
+  
   return result;
 }
 
