@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { runGammaEnhancedAnalysis } from './gammaEnhanced.js';
-import { runGammaCsvOnlyAnalysis } from './gammaCsvOnly.js';
+import { runGammaCsvOnlyAnalysis } from './gammaCsvOnlyV2.js';
 
 // Lazy initialization to ensure env vars are loaded
 let openai: OpenAI | null = null;
