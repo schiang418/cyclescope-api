@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { runGammaAnalysis } from './assistants/gamma.js';
 import { runDeltaAnalysis } from './assistants/delta.js';
+import { runDeltaV2Analysis } from './assistants/deltaV2.js';
 import { runFusionAnalysis } from './assistants/fusion.js';
 import {
   saveDailySnapshot,
@@ -12,6 +13,9 @@ import {
   getSnapshotHistory,
   getRecentChanges,
   trackStatusChange,
+  saveDeltaV2Analysis,
+  getLatestDeltaV2,
+  getDeltaV2History,
 } from './db.js';
 
 const t = initTRPC.create();
@@ -97,15 +101,19 @@ export const appRouter = t.router({
             console.log('[API] ✅ Proceeding with Delta analysis');
           }
           
-          // Step 2: Run Delta analysis (14 charts)
-          console.log('[API] Step 2/3: Running Delta analysis...');
+          // Step 2: Run Delta V1 analysis (14 charts)
+          console.log('[API] Step 2/4: Running Delta V1 analysis...');
           const deltaResult = await runDeltaAnalysis('engine', analysisDate);
           
-          // Step 3: Run Fusion synthesis
-          console.log('[API] Step 3/3: Running Fusion synthesis...');
+          // Step 3: Run Delta V2 analysis (19 short-term charts)
+          console.log('[API] Step 3/4: Running Delta V2 analysis...');
+          const deltaV2Result = await runDeltaV2Analysis('engine', analysisDate);
+          
+          // Step 4: Run Fusion synthesis
+          console.log('[API] Step 4/4: Running Fusion synthesis...');
           const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
         
-        // Step 4: Save to database
+        // Step 5: Save to database
         console.log('[API] Saving results to database...');
         const snapshot = await saveDailySnapshot({
           analysisDate, // Pass as string, saveDailySnapshot will handle conversion
@@ -161,15 +169,28 @@ export const appRouter = t.router({
           deltaPlainEnglishSummary: deltaResult.plainEnglishSummary,
           deltaNextTriggersDetail: deltaResult.nextTriggersDetail,
           
+          // Delta V2 - ALL fields
+          deltaV2AsofDate: deltaV2Result.asof_date,
+          deltaV2SchemaVersion: deltaV2Result.delta_schema_version,
+          deltaV2MarketCondition: deltaV2Result.layer1.market_condition,
+          deltaV2TurningPoint: deltaV2Result.layer1.turning_point,
+          deltaV2Outlook12Month: deltaV2Result.layer1.outlook_1_2_month,
+          deltaV2Domains: deltaV2Result.layer2.domains,
+          deltaV2TurningPointEvidence: deltaV2Result.layer2.turning_point_evidence,
+          deltaV2OutlookParagraph: deltaV2Result.layer2.outlook_paragraph,
+          deltaV2FullAnalysis: deltaV2Result,
+          deltaV2CreatedAt: new Date(),
+          
           // Full analysis JSON (backup)
           fullAnalysis: {
             gamma: gammaResult.fullAnalysis,
             delta: deltaResult.fullAnalysis,
+            deltaV2: deltaV2Result,
             fusion: fusionResult.fullAnalysis,
           },
         });
         
-        // Step 5: Track status changes
+        // Step 6: Track status changes
         const previous = await getLatestSnapshot();
         if (previous && previous.id !== snapshot.id) {
           // Check for changes in key fields
@@ -285,6 +306,20 @@ export const appRouter = t.router({
           nextTriggersDetail: snapshot.deltaNextTriggersDetail,
         },
         
+        // Delta V2 - ALL fields (10)
+        deltaV2: {
+          asofDate: snapshot.deltaV2AsofDate,
+          schemaVersion: snapshot.deltaV2SchemaVersion,
+          marketCondition: snapshot.deltaV2MarketCondition,
+          turningPoint: snapshot.deltaV2TurningPoint,
+          outlook12Month: snapshot.deltaV2Outlook12Month,
+          domains: snapshot.deltaV2Domains,
+          turningPointEvidence: snapshot.deltaV2TurningPointEvidence,
+          outlookParagraph: snapshot.deltaV2OutlookParagraph,
+          fullAnalysis: snapshot.deltaV2FullAnalysis,
+          createdAt: snapshot.deltaV2CreatedAt,
+        },
+        
         fullAnalysis: snapshot.fullAnalysis,
         createdAt: snapshot.createdAt,
         updatedAt: snapshot.updatedAt,
@@ -365,6 +400,20 @@ export const appRouter = t.router({
               rationaleBullets: snapshot.deltaRationaleBullets,
               plainEnglishSummary: snapshot.deltaPlainEnglishSummary,
               nextTriggersDetail: snapshot.deltaNextTriggersDetail,
+            },
+            
+            // Delta V2 - ALL fields (10)
+            deltaV2: {
+              asofDate: (snapshot as any).deltaV2AsofDate,
+              schemaVersion: (snapshot as any).deltaV2SchemaVersion,
+              marketCondition: (snapshot as any).deltaV2MarketCondition,
+              turningPoint: (snapshot as any).deltaV2TurningPoint,
+              outlook12Month: (snapshot as any).deltaV2Outlook12Month,
+              domains: (snapshot as any).deltaV2Domains,
+              turningPointEvidence: (snapshot as any).deltaV2TurningPointEvidence,
+              outlookParagraph: (snapshot as any).deltaV2OutlookParagraph,
+              fullAnalysis: (snapshot as any).deltaV2FullAnalysis,
+              createdAt: (snapshot as any).deltaV2CreatedAt ? ((snapshot as any).deltaV2CreatedAt instanceof Date ? (snapshot as any).deltaV2CreatedAt.toISOString() : String((snapshot as any).deltaV2CreatedAt)) : null,
             },
             
             // fullAnalysis removed to avoid potential Date serialization issues

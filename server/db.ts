@@ -314,3 +314,130 @@ function transformToDeltaPriorDay(snapshot: any): DeltaPriorDay {
   };
 }
 
+
+
+/**
+ * Save Delta V2 analysis to database
+ * Updates the daily snapshot for the given date with Delta V2 data
+ */
+export async function saveDeltaV2Analysis(
+  date: string,
+  analysis: {
+    asof_date: string;
+    schema_version: string;
+    market_condition: string;
+    turning_point: string;
+    outlook_1_2_month: string;
+    domains: any; // JSONB
+    turning_point_evidence: any; // JSONB
+    outlook_paragraph: string;
+    full_analysis: any; // JSONB
+  }
+) {
+  console.log(`[Database] Saving Delta V2 analysis for date: ${date}`);
+  
+  try {
+    const result = await db
+      .update(dailySnapshots)
+      .set({
+        deltaV2AsofDate: analysis.asof_date,
+        deltaV2SchemaVersion: analysis.schema_version,
+        deltaV2MarketCondition: analysis.market_condition,
+        deltaV2TurningPoint: analysis.turning_point,
+        deltaV2Outlook12Month: analysis.outlook_1_2_month,
+        deltaV2Domains: analysis.domains,
+        deltaV2TurningPointEvidence: analysis.turning_point_evidence,
+        deltaV2OutlookParagraph: analysis.outlook_paragraph,
+        deltaV2FullAnalysis: analysis.full_analysis,
+        deltaV2CreatedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(dailySnapshots.date, date))
+      .returning();
+    
+    if (result.length === 0) {
+      console.warn(`[Database] No existing snapshot found for date ${date}, creating new one`);
+      // If no snapshot exists for this date, create one
+      const insertResult = await db
+        .insert(dailySnapshots)
+        .values({
+          date,
+          deltaV2AsofDate: analysis.asof_date,
+          deltaV2SchemaVersion: analysis.schema_version,
+          deltaV2MarketCondition: analysis.market_condition,
+          deltaV2TurningPoint: analysis.turning_point,
+          deltaV2Outlook12Month: analysis.outlook_1_2_month,
+          deltaV2Domains: analysis.domains,
+          deltaV2TurningPointEvidence: analysis.turning_point_evidence,
+          deltaV2OutlookParagraph: analysis.outlook_paragraph,
+          deltaV2FullAnalysis: analysis.full_analysis,
+          deltaV2CreatedAt: new Date(),
+        })
+        .returning();
+      
+      console.log(`[Database] ✅ Created new snapshot with Delta V2 data for ${date}`);
+      return insertResult[0];
+    }
+    
+    console.log(`[Database] ✅ Updated snapshot with Delta V2 data for ${date}`);
+    return result[0];
+  } catch (error) {
+    console.error('[Database] ❌ Failed to save Delta V2 analysis:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get latest Delta V2 analysis
+ * Returns the most recent snapshot that has Delta V2 data
+ */
+export async function getLatestDeltaV2() {
+  try {
+    const [result] = await db
+      .select()
+      .from(dailySnapshots)
+      .where(isNotNull(dailySnapshots.deltaV2AsofDate))
+      .orderBy(desc(dailySnapshots.date))
+      .limit(1);
+    
+    if (!result) {
+      console.log('[Database] No Delta V2 data found');
+      return null;
+    }
+    
+    console.log(`[Database] Latest Delta V2 data from: ${result.date}`);
+    return result;
+  } catch (error) {
+    console.error('[Database] Failed to fetch latest Delta V2:', error);
+    return null;
+  }
+}
+
+/**
+ * Get Delta V2 history (last N days with Delta V2 data)
+ */
+export async function getDeltaV2History(days: number = 30) {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+    
+    const snapshots = await db
+      .select()
+      .from(dailySnapshots)
+      .where(
+        and(
+          isNotNull(dailySnapshots.deltaV2AsofDate),
+          sql`${dailySnapshots.date} >= ${cutoffDateStr}`
+        )
+      )
+      .orderBy(desc(dailySnapshots.date));
+    
+    console.log(`[Database] Fetched ${snapshots.length} Delta V2 snapshots from last ${days} days`);
+    return snapshots;
+  } catch (error) {
+    console.error('[Database] Failed to fetch Delta V2 history:', error);
+    return [];
+  }
+}
+

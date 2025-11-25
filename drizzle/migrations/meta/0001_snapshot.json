@@ -1,0 +1,452 @@
+{
+  "id": "b723d55f-ac22-4c38-97aa-ba02d021fd84",
+  "prevId": "5db36bea-d10d-47c8-8093-f80886d2df9f",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.daily_snapshots": {
+      "name": "daily_snapshots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fusion_asof_date": {
+          "name": "fusion_asof_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_cycle_stage": {
+          "name": "fusion_cycle_stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_fragility_color": {
+          "name": "fusion_fragility_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_fragility_label": {
+          "name": "fusion_fragility_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_guidance_label": {
+          "name": "fusion_guidance_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_headline_summary": {
+          "name": "fusion_headline_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_cycle_tone": {
+          "name": "fusion_cycle_tone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_narrative_summary": {
+          "name": "fusion_narrative_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_guidance_bullets": {
+          "name": "fusion_guidance_bullets",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fusion_watch_commentary": {
+          "name": "fusion_watch_commentary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_asof_week": {
+          "name": "gamma_asof_week",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_cycle_stage_primary": {
+          "name": "gamma_cycle_stage_primary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_cycle_stage_transition": {
+          "name": "gamma_cycle_stage_transition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_macro_posture_label": {
+          "name": "gamma_macro_posture_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_headline_summary": {
+          "name": "gamma_headline_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_domains": {
+          "name": "gamma_domains",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_phase_confidence": {
+          "name": "gamma_phase_confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_cycle_tone": {
+          "name": "gamma_cycle_tone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_overall_summary": {
+          "name": "gamma_overall_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamma_domain_details": {
+          "name": "gamma_domain_details",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_asof_date": {
+          "name": "delta_asof_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_fragility_color": {
+          "name": "delta_fragility_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_fragility_label": {
+          "name": "delta_fragility_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_fragility_score": {
+          "name": "delta_fragility_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_template_code": {
+          "name": "delta_template_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_template_name": {
+          "name": "delta_template_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_pattern_plain": {
+          "name": "delta_pattern_plain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_posture_code": {
+          "name": "delta_posture_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_posture_label": {
+          "name": "delta_posture_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_headline_summary": {
+          "name": "delta_headline_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_key_drivers": {
+          "name": "delta_key_drivers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_next_watch_display": {
+          "name": "delta_next_watch_display",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_phase_used": {
+          "name": "delta_phase_used",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_phase_confidence": {
+          "name": "delta_phase_confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_breadth": {
+          "name": "delta_breadth",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_liquidity": {
+          "name": "delta_liquidity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_volatility": {
+          "name": "delta_volatility",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_leadership": {
+          "name": "delta_leadership",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_breadth_text": {
+          "name": "delta_breadth_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_liquidity_text": {
+          "name": "delta_liquidity_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_volatility_text": {
+          "name": "delta_volatility_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_leadership_text": {
+          "name": "delta_leadership_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_rationale_bullets": {
+          "name": "delta_rationale_bullets",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_plain_english_summary": {
+          "name": "delta_plain_english_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_next_triggers_detail": {
+          "name": "delta_next_triggers_detail",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_asof_date": {
+          "name": "delta_v2_asof_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_schema_version": {
+          "name": "delta_v2_schema_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_created_at": {
+          "name": "delta_v2_created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_market_condition": {
+          "name": "delta_v2_market_condition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_turning_point": {
+          "name": "delta_v2_turning_point",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_outlook_1_2_month": {
+          "name": "delta_v2_outlook_1_2_month",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_domains": {
+          "name": "delta_v2_domains",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_turning_point_evidence": {
+          "name": "delta_v2_turning_point_evidence",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_outlook_paragraph": {
+          "name": "delta_v2_outlook_paragraph",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delta_v2_full_analysis": {
+          "name": "delta_v2_full_analysis",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "full_analysis": {
+          "name": "full_analysis",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "daily_snapshots_date_unique": {
+          "name": "daily_snapshots_date_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "date"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.status_changes": {
+      "name": "status_changes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "old_value": {
+          "name": "old_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "new_value": {
+          "name": "new_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

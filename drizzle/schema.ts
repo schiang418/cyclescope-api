@@ -90,6 +90,26 @@ export const dailySnapshots = pgTable('daily_snapshots', {
   deltaNextTriggersDetail: jsonb('delta_next_triggers_detail'), // Array of trigger objects
   
   // ========================================
+  // DELTA V2 ASSISTANT RESULTS (Layer 1 + Layer 2)
+  // ========================================
+  
+  // Metadata
+  deltaV2AsofDate: text('delta_v2_asof_date'),
+  deltaV2SchemaVersion: text('delta_v2_schema_version'),
+  deltaV2CreatedAt: timestamp('delta_v2_created_at'),
+  
+  // Layer 1 fields (3 fields)
+  deltaV2MarketCondition: text('delta_v2_market_condition'),
+  deltaV2TurningPoint: text('delta_v2_turning_point'),
+  deltaV2Outlook12Month: text('delta_v2_outlook_1_2_month'),
+  
+  // Layer 2 fields
+  deltaV2Domains: jsonb('delta_v2_domains'),                           // 7 domain paragraphs
+  deltaV2TurningPointEvidence: jsonb('delta_v2_turning_point_evidence'), // 3 evidence paragraphs
+  deltaV2OutlookParagraph: text('delta_v2_outlook_paragraph'),
+  deltaV2FullAnalysis: jsonb('delta_v2_full_analysis'),                // Complete JSON backup
+  
+  // ========================================
   // METADATA
   // ========================================
   
