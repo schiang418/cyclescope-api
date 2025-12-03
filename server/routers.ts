@@ -433,6 +433,121 @@ export const appRouter = t.router({
         const changes = await getRecentChanges(input.limit);
         return changes;
       }),
+
+    /**
+     * Copy analysis data from one date to another
+     * Useful for fixing data issues or backfilling missing dates
+     */
+    copyAnalysis: t.procedure
+      .input(z.object({
+        fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+        toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+      }))
+      .mutation(async ({ input }) => {
+        const { fromDate, toDate } = input;
+        
+        console.log(`[API] 📋 Copying analysis data from ${fromDate} to ${toDate}...`);
+        
+        // Get source snapshot
+        const snapshots = await getSnapshotHistory(365);
+        const sourceSnapshot = snapshots.find(s => s.date === fromDate);
+        
+        // Type guard: ensure we have a real snapshot (not a placeholder)
+        if (!sourceSnapshot || sourceSnapshot.id === null) {
+          throw new Error(`Source date ${fromDate} not found or has no data`);
+        }
+        
+        console.log(`[API] ✅ Found source snapshot ID: ${sourceSnapshot.id}`);
+        console.log(`[API] Source has gamma domains: ${Array.isArray(sourceSnapshot.gammaDomains) ? sourceSnapshot.gammaDomains.length : 0}`);
+        console.log(`[API] Source has delta fragility: ${sourceSnapshot.deltaFragilityScore}`);
+        
+        // Save as new snapshot with target date
+        const newSnapshot = await saveDailySnapshot({
+          analysisDate: toDate,
+          
+          // Fusion - ALL fields
+          fusionAsofDate: sourceSnapshot.fusionAsofDate,
+          fusionCycleStage: sourceSnapshot.fusionCycleStage,
+          fusionFragilityColor: sourceSnapshot.fusionFragilityColor,
+          fusionFragilityLabel: sourceSnapshot.fusionFragilityLabel,
+          fusionGuidanceLabel: sourceSnapshot.fusionGuidanceLabel,
+          fusionHeadlineSummary: sourceSnapshot.fusionHeadlineSummary,
+          fusionCycleTone: sourceSnapshot.fusionCycleTone,
+          fusionNarrativeSummary: sourceSnapshot.fusionNarrativeSummary,
+          fusionGuidanceBullets: sourceSnapshot.fusionGuidanceBullets,
+          fusionWatchCommentary: sourceSnapshot.fusionWatchCommentary,
+          
+          // Gamma - ALL fields
+          gammaAsofWeek: sourceSnapshot.gammaAsofWeek,
+          gammaCycleStagePrimary: sourceSnapshot.gammaCycleStagePrimary,
+          gammaCycleStageTransition: sourceSnapshot.gammaCycleStageTransition,
+          gammaMacroPostureLabel: sourceSnapshot.gammaMacroPostureLabel,
+          gammaHeadlineSummary: sourceSnapshot.gammaHeadlineSummary,
+          gammaDomains: sourceSnapshot.gammaDomains,
+          gammaPhaseConfidence: sourceSnapshot.gammaPhaseConfidence,
+          gammaCycleTone: sourceSnapshot.gammaCycleTone,
+          gammaOverallSummary: sourceSnapshot.gammaOverallSummary,
+          gammaDomainDetails: sourceSnapshot.gammaDomainDetails,
+          
+          // Delta - ALL fields
+          deltaAsofDate: sourceSnapshot.deltaAsofDate,
+          deltaFragilityColor: sourceSnapshot.deltaFragilityColor,
+          deltaFragilityLabel: sourceSnapshot.deltaFragilityLabel,
+          deltaFragilityScore: sourceSnapshot.deltaFragilityScore,
+          deltaTemplateCode: sourceSnapshot.deltaTemplateCode,
+          deltaTemplateName: sourceSnapshot.deltaTemplateName,
+          deltaPatternPlain: sourceSnapshot.deltaPatternPlain,
+          deltaPostureCode: sourceSnapshot.deltaPostureCode,
+          deltaPostureLabel: sourceSnapshot.deltaPostureLabel,
+          deltaHeadlineSummary: sourceSnapshot.deltaHeadlineSummary,
+          deltaKeyDrivers: sourceSnapshot.deltaKeyDrivers,
+          deltaNextWatchDisplay: sourceSnapshot.deltaNextWatchDisplay,
+          deltaPhaseUsed: sourceSnapshot.deltaPhaseUsed,
+          deltaPhaseConfidence: sourceSnapshot.deltaPhaseConfidence,
+          deltaBreadth: sourceSnapshot.deltaBreadth,
+          deltaLiquidity: sourceSnapshot.deltaLiquidity,
+          deltaVolatility: sourceSnapshot.deltaVolatility,
+          deltaLeadership: sourceSnapshot.deltaLeadership,
+          deltaBreadthText: sourceSnapshot.deltaBreadthText,
+          deltaLiquidityText: sourceSnapshot.deltaLiquidityText,
+          deltaVolatilityText: sourceSnapshot.deltaVolatilityText,
+          deltaLeadershipText: sourceSnapshot.deltaLeadershipText,
+          deltaRationaleBullets: sourceSnapshot.deltaRationaleBullets,
+          deltaPlainEnglishSummary: sourceSnapshot.deltaPlainEnglishSummary,
+          deltaNextTriggersDetail: sourceSnapshot.deltaNextTriggersDetail,
+          
+          // Delta V2 - ALL fields
+          deltaV2AsofDate: sourceSnapshot.deltaV2AsofDate,
+          deltaV2SchemaVersion: sourceSnapshot.deltaV2SchemaVersion,
+          deltaV2MarketCondition: sourceSnapshot.deltaV2MarketCondition,
+          deltaV2TurningPoint: sourceSnapshot.deltaV2TurningPoint,
+          deltaV2Outlook12Month: sourceSnapshot.deltaV2Outlook12Month,
+          deltaV2Domains: sourceSnapshot.deltaV2Domains,
+          deltaV2TurningPointEvidence: sourceSnapshot.deltaV2TurningPointEvidence,
+          deltaV2OutlookParagraph: sourceSnapshot.deltaV2OutlookParagraph,
+          deltaV2FullAnalysis: sourceSnapshot.deltaV2FullAnalysis,
+          deltaV2CreatedAt: sourceSnapshot.deltaV2CreatedAt,
+          
+          // Full analysis JSON
+          fullAnalysis: sourceSnapshot.fullAnalysis,
+        });
+        
+        console.log(`[API] ✅ Analysis data copied successfully`);
+        console.log(`[API] 💾 New snapshot ID: ${newSnapshot.id}`);
+        console.log(`[API] Target has gamma domains: ${Array.isArray(newSnapshot.gammaDomains) ? newSnapshot.gammaDomains.length : 0}`);
+        console.log(`[API] Target has delta fragility: ${newSnapshot.deltaFragilityScore}`);
+        
+        return {
+          success: true,
+          message: `Analysis data copied from ${fromDate} to ${toDate}`,
+          sourceSnapshotId: sourceSnapshot.id,
+          newSnapshotId: newSnapshot.id,
+          copiedFields: {
+            gammaDomains: Array.isArray(newSnapshot.gammaDomains) ? newSnapshot.gammaDomains.length : 0,
+            deltaFragilityScore: newSnapshot.deltaFragilityScore,
+          },
+        };
+      }),
   }),
 });
 
