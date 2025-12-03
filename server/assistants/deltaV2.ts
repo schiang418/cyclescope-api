@@ -108,15 +108,38 @@ function getMarketDate(): string {
 }
 
 /**
- * Run Delta V2 Assistant analysis on 19 short-term charts
+ * Helper function to check if an error is a rate limit error
+ */
+function isRateLimitError(error: any): boolean {
+  return error?.code === 'rate_limit_exceeded' || 
+         error?.message?.includes('rate_limit') ||
+         error?.message?.includes('Rate limit');
+}
+
+/**
+ * Helper function to extract wait time from rate limit error message
+ * Example: "Please try again in 2.09s" -> 2090 ms
+ */
+function extractWaitTime(errorMessage: string): number {
+  const match = errorMessage.match(/try again in ([\d.]+)s/);
+  if (match) {
+    return Math.ceil(parseFloat(match[1]) * 1000);
+  }
+  return 0;
+}
+
+/**
+ * Run Delta V2 Assistant analysis on 19 short-term charts with retry logic
  * 
  * @param mode - 'engine' returns full JSON (Layer 1 + Layer 2), 'panel' returns Layer 1 only
  * @param date - Optional date override (defaults to current market date in ET)
+ * @param retryCount - Internal parameter for tracking retry attempts
  * @returns Delta V2 analysis result with Layer 1 and Layer 2 data
  */
 export async function runDeltaV2Analysis(
   mode: 'engine' | 'panel' = 'engine',
-  date?: string
+  date?: string,
+  retryCount: number = 0
 ): Promise<DeltaV2AnalysisResult> {
   const analysisDate = date || getMarketDate();
   console.log(`[Delta V2] Starting analysis for ${analysisDate} (market date) with 19 charts...`);
@@ -222,6 +245,35 @@ Please provide the complete ENGINE mode JSON output now.`
       console.error('[Delta V2] ❌ RUN FAILED');
       console.error('[Delta V2] Status:', runStatus.status);
       console.error('[Delta V2] Last error:', runStatus.last_error);
+      
+      // Check if it's a rate limit error and we haven't exceeded max retries
+      const MAX_RETRIES = 3;
+      if (isRateLimitError(runStatus.last_error) && retryCount < MAX_RETRIES) {
+        const errorMessage = runStatus.last_error?.message || '';
+        
+        // Try to extract wait time from error message
+        let waitTime = extractWaitTime(errorMessage);
+        
+        // If no wait time found, use exponential backoff: 3s, 6s, 12s
+        if (waitTime === 0) {
+          waitTime = 3000 * Math.pow(2, retryCount);
+        }
+        
+        // Add a small buffer (1 second) to ensure rate limit has reset
+        waitTime += 1000;
+        
+        console.log(`[Delta V2] 🔄 Rate limit detected. Retry ${retryCount + 1}/${MAX_RETRIES} after ${waitTime}ms`);
+        console.log(`[Delta V2] Error details: ${errorMessage}`);
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        // Retry the entire analysis
+        console.log(`[Delta V2] 🔄 Retrying analysis (attempt ${retryCount + 2})...`);
+        return runDeltaV2Analysis(mode, date, retryCount + 1);
+      }
+      
+      // Not a rate limit error or max retries exceeded
       throw new Error(`Delta V2 analysis failed: ${runStatus.last_error?.message || runStatus.status}`);
     }
     
