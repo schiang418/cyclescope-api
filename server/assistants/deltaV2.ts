@@ -251,16 +251,9 @@ Please provide the complete ENGINE mode JSON output now.`
       if (isRateLimitError(runStatus.last_error) && retryCount < MAX_RETRIES) {
         const errorMessage = runStatus.last_error?.message || '';
         
-        // Try to extract wait time from error message
-        let waitTime = extractWaitTime(errorMessage);
-        
-        // If no wait time found, use exponential backoff: 3s, 6s, 12s
-        if (waitTime === 0) {
-          waitTime = 3000 * Math.pow(2, retryCount);
-        }
-        
-        // Add a small buffer (1 second) to ensure rate limit has reset
-        waitTime += 1000;
+        // Wait 60 seconds to ensure the sliding window clears
+        // OpenAI uses a 60-second sliding window for rate limits
+        const waitTime = 60000; // 1 minute
         
         console.log(`[Delta V2] 🔄 Rate limit detected. Retry ${retryCount + 1}/${MAX_RETRIES} after ${waitTime}ms`);
         console.log(`[Delta V2] Error details: ${errorMessage}`);
