@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, jsonb, integer, date } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, jsonb, integer, date, varchar, unique } from 'drizzle-orm/pg-core';
 
 /**
  * Daily Snapshots Table - COMPLETE VERSION
@@ -138,3 +138,141 @@ export type InsertDailySnapshot = typeof dailySnapshots.$inferInsert;
 export type StatusChange = typeof statusChanges.$inferSelect;
 export type InsertStatusChange = typeof statusChanges.$inferInsert;
 
+
+/**
+ * Secular Analysis Table
+ * 
+ * Stores long-term market trend analysis with scenario projections.
+ * Used by cyclescope-secular project for secular market analysis.
+ * 
+ * WARNING: This table is shared across multiple projects.
+ * DO NOT modify or delete without coordination.
+ */
+export const secularAnalysis = pgTable('secular_analysis', {
+  // Primary Key & Date
+  id: serial('id').primaryKey(),
+  asofDate: date('asof_date').notNull().unique(),
+  
+  // Layer 1: Core Analysis Fields (7 columns)
+  secularTrend: text('secular_trend'),
+  secularRegimeStatus: varchar('secular_regime_status', { length: 100 }),
+  channelPosition: varchar('channel_position', { length: 100 }),
+  recentBehaviorSummary: text('recent_behavior_summary'),
+  interpretation: text('interpretation'),
+  riskBias: text('risk_bias'),
+  summarySignal: text('summary_signal'),
+  
+  // Layer 2: Scenario Analysis Metadata (3 columns)
+  dominantDynamics: text('dominant_dynamics'),
+  overallBias: text('overall_bias'),
+  secularSummary: text('secular_summary'),
+  
+  // Layer 2: Scenario 1 (9 columns)
+  scenario1Id: varchar('scenario1_id', { length: 10 }),
+  scenario1Name: varchar('scenario1_name', { length: 100 }),
+  scenario1Probability: text('scenario1_probability'),
+  scenario1PathSummary: text('scenario1_path_summary'),
+  scenario1TechnicalLogic: text('scenario1_technical_logic'),
+  scenario1TargetZone: text('scenario1_target_zone'),
+  scenario1ExpectedMoveMin: text('scenario1_expected_move_min'),
+  scenario1ExpectedMoveMax: text('scenario1_expected_move_max'),
+  scenario1RiskProfile: text('scenario1_risk_profile'),
+  
+  // Layer 2: Scenario 2 (9 columns)
+  scenario2Id: varchar('scenario2_id', { length: 10 }),
+  scenario2Name: varchar('scenario2_name', { length: 100 }),
+  scenario2Probability: text('scenario2_probability'),
+  scenario2PathSummary: text('scenario2_path_summary'),
+  scenario2TechnicalLogic: text('scenario2_technical_logic'),
+  scenario2TargetZone: text('scenario2_target_zone'),
+  scenario2ExpectedMoveMin: text('scenario2_expected_move_min'),
+  scenario2ExpectedMoveMax: text('scenario2_expected_move_max'),
+  scenario2RiskProfile: text('scenario2_risk_profile'),
+  
+  // Layer 2: Scenario 3 (9 columns)
+  scenario3Id: varchar('scenario3_id', { length: 10 }),
+  scenario3Name: varchar('scenario3_name', { length: 100 }),
+  scenario3Probability: text('scenario3_probability'),
+  scenario3PathSummary: text('scenario3_path_summary'),
+  scenario3TechnicalLogic: text('scenario3_technical_logic'),
+  scenario3TargetZone: text('scenario3_target_zone'),
+  scenario3ExpectedMoveMin: text('scenario3_expected_move_min'),
+  scenario3ExpectedMoveMax: text('scenario3_expected_move_max'),
+  scenario3RiskProfile: text('scenario3_risk_profile'),
+  
+  // Layer 2: Scenario 4 (9 columns)
+  scenario4Id: varchar('scenario4_id', { length: 10 }),
+  scenario4Name: varchar('scenario4_name', { length: 100 }),
+  scenario4Probability: text('scenario4_probability'),
+  scenario4PathSummary: text('scenario4_path_summary'),
+  scenario4TechnicalLogic: text('scenario4_technical_logic'),
+  scenario4TargetZone: text('scenario4_target_zone'),
+  scenario4ExpectedMoveMin: text('scenario4_expected_move_min'),
+  scenario4ExpectedMoveMax: text('scenario4_expected_move_max'),
+  scenario4RiskProfile: text('scenario4_risk_profile'),
+  
+  // Layer 3: Summary Fields (5 columns)
+  scenarioSummary1: text('scenario_summary_1'),
+  scenarioSummary2: text('scenario_summary_2'),
+  scenarioSummary3: text('scenario_summary_3'),
+  scenarioSummary4: text('scenario_summary_4'),
+  primaryMessage: text('primary_message'),
+  
+  // File References (2 columns)
+  originalChartUrl: text('original_chart_url'),
+  annotatedChartUrl: text('annotated_chart_url'),
+  
+  // Timestamps (2 columns)
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type SecularAnalysis = typeof secularAnalysis.$inferSelect;
+export type InsertSecularAnalysis = typeof secularAnalysis.$inferInsert;
+
+/**
+ * Domain Analyses Table
+ * 
+ * Stores detailed domain analysis data from OpenAI Assistant.
+ * Each domain (Macro, Leadership, Breadth, Liquidity, Volatility, Sentiment) 
+ * gets one record per day.
+ * 
+ * Used by cyclescope-domain-api project for domain-specific analysis.
+ * 
+ * WARNING: This table is shared across multiple projects.
+ * DO NOT modify or delete without coordination.
+ * 
+ * Retention: 5 days (older records automatically deleted)
+ */
+export const domainAnalyses = pgTable('domain_analyses', {
+  id: serial('id').primaryKey(),
+  
+  // Composite unique key: one record per domain per day
+  date: date('date').notNull(),
+  dimensionCode: varchar('dimension_code', { length: 20 }).notNull(),
+  
+  // Metadata
+  dimensionName: varchar('dimension_name', { length: 100 }).notNull(),
+  asOfDate: date('as_of_date').notNull(),
+  
+  // Full analysis JSON (5-10 KB per domain)
+  // Contains complete Assistant response including all indicators
+  fullAnalysis: jsonb('full_analysis').notNull(),
+  
+  // Extracted fields for quick queries (avoid parsing JSONB)
+  indicatorCount: integer('indicator_count'),
+  integratedReadBullets: jsonb('integrated_read_bullets'),
+  overallConclusionSummary: text('overall_conclusion_summary'),
+  toneHeadline: text('tone_headline'),
+  toneBullets: jsonb('tone_bullets'),
+  
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Ensure only one record per domain per day
+  uniqueDomainPerDay: unique().on(table.date, table.dimensionCode),
+}));
+
+export type DomainAnalysis = typeof domainAnalyses.$inferSelect;
+export type InsertDomainAnalysis = typeof domainAnalyses.$inferInsert;
