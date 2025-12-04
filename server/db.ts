@@ -57,7 +57,7 @@ export async function getLatestSnapshot() {
   const [result] = await db
     .select()
     .from(dailySnapshots)
-    .orderBy(desc(dailySnapshots.createdAt))
+    .orderBy(desc(dailySnapshots.updatedAt))
     .limit(1);
   
   return result;
