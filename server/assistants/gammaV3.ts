@@ -286,28 +286,16 @@ export async function runGammaV3Analysis(
     return key.charAt(0).toUpperCase() + key.slice(1);
   };
   
-  // Helper: Map emoji to color code
-  const getColorCode = (emoji: string): string => {
-    const emojiMap: Record<string, string> = {
-      '🟢': 'green',
-      '🟡': 'yellow',
-      '🟠': 'orange',
-      '🔴': 'red',
-      '⚪': 'gray'
-    };
-    return emojiMap[emoji] || 'gray';
-  };
-  
   // Transform domains to Portal-compatible format
   const domains = level1.domains || Object.keys(domainStatus).map(key => {
     const domain = domainStatus[key];
     return {
       domain_name: formatDomainName(key),
       bias_label: domain.bias || 'Neutral',
-      color_code: getColorCode(domain.bias_emoji || '🟡'),
-      bias_emoji: domain.bias_emoji,
-      observations: domain.observations,
-      interpretation: domain.interpretation
+      color_code: domain.bias_emoji || '🟡',  // Portal expects emoji, not color name
+      bias_emoji: domain.bias_emoji || '🟡',
+      observations: domain.observations || '',
+      interpretation: domain.interpretation || ''
     };
   }) || [];
   
