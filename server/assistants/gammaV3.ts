@@ -261,20 +261,39 @@ export async function runGammaV3Analysis(
   const level1 = gammaData.level1 || gammaData.layer1 || {};
   const level2 = gammaData.level2 || gammaData.layer2 || {};
   
+  // Handle nested cycle_stage structure (Prompt returns nested object)
+  const cycleStage = level1.cycle_stage || {};
+  const cycleStagePrimary = cycleStage.primary || level1.cycle_stage_primary || level1.cycleStagePrimary || 'Unknown';
+  const cycleStageTransition = cycleStage.transition || level1.cycle_stage_transition || level1.cycleStageTransition || 'None';
+  const phaseConfidence = cycleStage.phase_confidence || level1.phase_confidence || level2.phase_confidence || level2.phaseConfidence || '';
+  
+  // Handle nested overall_summary structure (Prompt returns nested object)
+  const overallSummaryObj = level1.overall_summary || {};
+  const headlineSummary = overallSummaryObj.summary || level1.headline_summary || level1.headlineSummary || '';
+  const synthesisSignal = overallSummaryObj.synthesis_signal || '';
+  const overallBias = overallSummaryObj.overall_bias || '';
+  
+  // Handle domain_status (Prompt returns nested object)
+  const domainStatus = level1.domain_status || {};
+  const domains = level1.domains || Object.keys(domainStatus).map(key => ({
+    name: key,
+    ...domainStatus[key]
+  })) || [];
+  
   // Build result object
   const result: GammaAnalysisResult = {
     // Level 1 fields
     asofWeek: level1.asof_week || level1.asofWeek || analysisDate,
-    cycleStagePrimary: level1.cycle_stage_primary || level1.cycleStagePrimary || 'Unknown',
-    cycleStageTransition: level1.cycle_stage_transition || level1.cycleStageTransition || 'None',
-    macroPostureLabel: level1.macro_posture_label || level1.macroPostureLabel || 'Neutral',
-    headlineSummary: level1.headline_summary || level1.headlineSummary || '',
-    domains: level1.domains || [],
+    cycleStagePrimary,
+    cycleStageTransition,
+    macroPostureLabel: level1.macro_posture_label || level1.macroPostureLabel || overallBias || 'Neutral',
+    headlineSummary,
+    domains,
     
     // Level 2 fields
-    phaseConfidence: level2.phase_confidence || level2.phaseConfidence || '',
-    cycleTone: level2.cycle_tone || level2.cycleTone || '',
-    overallSummary: level2.overall_summary || level2.overallSummary || '',
+    phaseConfidence: String(phaseConfidence),
+    cycleTone: level2.cycle_tone || level2.cycleTone || synthesisSignal || '',
+    overallSummary: level2.overall_summary || level2.overallSummary || headlineSummary || '',
     domainDetails: level2.domain_details || level2.domainDetails || [],
     
     // Full analysis
