@@ -3,11 +3,14 @@ import { z } from 'zod';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { runGammaAnalysis } from './assistants/gamma.js';
-import { runDeltaAnalysis } from './assistants/delta.js';
-import { runDeltaV2Analysis } from './assistants/deltaV2.js';
+import { runGammaV3Analysis } from './assistants/gammaV3.js';
+import { runDeltaV1Analysis } from './assistants/deltaV1_ResponsesAPI.js';
 import { runDeltaV3Analysis } from './assistants/deltaV3.js';
-import { runFusionAnalysis } from './assistants/fusion.js';
+// Legacy imports (not used in production)
+// import { runGammaAnalysis } from './assistants/gamma.js';
+// import { runDeltaAnalysis } from './assistants/delta.js';
+// import { runDeltaV2Analysis } from './assistants/deltaV2.js';
+// import { runFusionAnalysis } from './assistants/fusion.js';
 import {
   saveDailySnapshot,
   getLatestSnapshot,
@@ -76,9 +79,9 @@ export const appRouter = t.router({
         try {
           console.log('[API] 🔄 Background analysis started...');
           
-          // Step 1: Run Gamma analysis (18 charts)
-          console.log('[API] Step 1/3: Running Gamma analysis...');
-          const gammaResult = await runGammaAnalysis('engine', analysisDate);
+          // Step 1: Run Gamma V3 analysis (18 charts) - Responses API
+          console.log('[API] Step 1/4: Running Gamma V3 analysis (Responses API)...');
+          const gammaResult = await runGammaV3Analysis('engine', analysisDate);
           
           // Add delay between Gamma and Delta in CSV-Only mode to avoid TPM rate limit
           const enhancedMode = process.env.ENABLE_ENHANCED_ANALYSIS || 'false';
@@ -102,17 +105,32 @@ export const appRouter = t.router({
             console.log('[API] ✅ Proceeding with Delta analysis');
           }
           
-          // Step 2: Run Delta V1 analysis (14 charts)
-          console.log('[API] Step 2/4: Running Delta V1 analysis...');
-          const deltaResult = await runDeltaAnalysis('engine', analysisDate);
+          // Step 2: Run Delta V1 analysis (14 charts) - Responses API
+          console.log('[API] Step 2/4: Running Delta V1 analysis (Responses API)...');
+          const deltaResult = await runDeltaV1Analysis('engine', analysisDate);
           
           // Step 3: Run Delta V3 analysis (19 short-term charts) - Responses API
           console.log('[API] Step 3/4: Running Delta V3 analysis (Responses API)...');
           const deltaV2Result = await runDeltaV3Analysis('engine', analysisDate);
           
-          // Step 4: Run Fusion synthesis
-          console.log('[API] Step 4/4: Running Fusion synthesis...');
-          const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
+          // Step 4: Fusion synthesis (skipped - using Secular API in portal)
+          console.log('[API] Step 4/4: Skipping Fusion V1 (portal uses Fusion V2 from Secular API)...');
+          // const fusionResult = await runFusionAnalysis('engine', gammaResult, deltaResult, analysisDate);
+          
+          // Create placeholder fusion result for database compatibility
+          const fusionResult = {
+            asofDate: analysisDate,
+            cycleStage: 'N/A',
+            fragilityColor: 'gray',
+            fragilityLabel: 'N/A',
+            guidanceLabel: 'See Fusion V2 in Portal',
+            headlineSummary: 'Fusion V2 data available via Secular API',
+            cycleTone: 'N/A',
+            narrativeSummary: 'Fusion V2 uses Secular API - see portal for details',
+            guidanceBullets: [],
+            watchCommentary: 'N/A',
+            fullAnalysis: { note: 'Fusion V2 data from Secular API' }
+          };
         
         // Step 5: Save to database
         console.log('[API] Saving results to database...');
