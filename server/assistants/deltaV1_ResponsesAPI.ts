@@ -212,7 +212,7 @@ export async function runDeltaV1Analysis(
           content: inputContent
         }
       ]
-    });
+    } as any);
   } catch (error: any) {
     console.error('[Delta V1] ❌ Responses API call failed');
     console.error('[Delta V1] Error:', error.message || error);

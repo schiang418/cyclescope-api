@@ -222,7 +222,7 @@ export async function runDeltaV3Analysis(
           content: inputContent
         }
       ]
-    });
+    } as any);
   } catch (error: any) {
     console.error('[Delta V3] ❌ Responses API call failed');
     console.error('[Delta V3] Error:', error.message || error);

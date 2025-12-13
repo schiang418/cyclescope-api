@@ -203,7 +203,7 @@ export async function runGammaV3Analysis(
           content: inputContent
         }
       ]
-    });
+    } as any);
   } catch (error: any) {
     console.error('[Gamma V3] ❌ Responses API call failed');
     console.error('[Gamma V3] Error:', error.message || error);
