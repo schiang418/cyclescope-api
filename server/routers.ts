@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import { runGammaAnalysis } from './assistants/gamma.js';
 import { runDeltaAnalysis } from './assistants/delta.js';
 import { runDeltaV2Analysis } from './assistants/deltaV2.js';
+import { runDeltaV3Analysis } from './assistants/deltaV3.js';
 import { runFusionAnalysis } from './assistants/fusion.js';
 import {
   saveDailySnapshot,
@@ -105,9 +106,9 @@ export const appRouter = t.router({
           console.log('[API] Step 2/4: Running Delta V1 analysis...');
           const deltaResult = await runDeltaAnalysis('engine', analysisDate);
           
-          // Step 3: Run Delta V2 analysis (19 short-term charts)
-          console.log('[API] Step 3/4: Running Delta V2 analysis...');
-          const deltaV2Result = await runDeltaV2Analysis('engine', analysisDate);
+          // Step 3: Run Delta V3 analysis (19 short-term charts) - Responses API
+          console.log('[API] Step 3/4: Running Delta V3 analysis (Responses API)...');
+          const deltaV2Result = await runDeltaV3Analysis('engine', analysisDate);
           
           // Step 4: Run Fusion synthesis
           console.log('[API] Step 4/4: Running Fusion synthesis...');
