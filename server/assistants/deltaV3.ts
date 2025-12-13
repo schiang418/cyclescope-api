@@ -247,25 +247,11 @@ export async function runDeltaV3Analysis(
   const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`[Delta V3] ✅ Responses API call completed in ${elapsedTime}s`);
   
-  // Extract response text
-  // Note: Response structure may vary, check OpenAI docs for exact field names
-  let fullResponse: string;
-  
-  if (response.output_text) {
-    fullResponse = response.output_text;
-  } else if (response.output && Array.isArray(response.output)) {
-    // Handle array output format
-    const textOutput = response.output.find((item: any) => item.type === 'text');
-    if (textOutput && textOutput.text) {
-      fullResponse = textOutput.text;
-    } else {
-      throw new Error('No text output found in response');
-    }
-  } else if (response.output && typeof response.output === 'string') {
-    fullResponse = response.output;
-  } else {
-    console.error('[Delta V3] Unexpected response structure:', JSON.stringify(response, null, 2));
-    throw new Error('Unexpected response structure from Responses API');
+  // Extract response text using output_text
+  const fullResponse = response.output_text;
+  if (!fullResponse) {
+    console.error('[Delta V3] No output_text in response:', JSON.stringify(response, null, 2));
+    throw new Error('No output_text in response from Responses API');
   }
   
   // Log the raw response for debugging
